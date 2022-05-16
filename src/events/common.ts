@@ -4,7 +4,7 @@ import type { ArgsOf } from 'discordx'
 import { Guard } from 'discordx'
 import { Discord, On, Client } from 'discordx'
 import { injectable } from 'tsyringe'
-import Database from '../sevices/wiki.js'
+import Database from '../sevices/wikiUpdates.js'
 import 'dotenv/config'
 
 @Discord()

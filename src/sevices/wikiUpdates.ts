@@ -1,7 +1,7 @@
 import { singleton } from 'tsyringe'
 
 @singleton()
-export default class Database {
+export default class WikiUpdates {
     database: string
 
     constructor() {

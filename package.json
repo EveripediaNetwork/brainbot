@@ -39,7 +39,9 @@
         "@koa/router": "^10.1.1",
         "discord.js": "^13.6.0",
         "discordx": "^9.5.3",
+        "graphql-request": "^4.2.0",
         "koa": "^2.13.4",
+        "node-schedule": "^2.1.0",
         "reflect-metadata": "^0.1.13",
         "tsyringe": "^4.6.0"
     },
