@@ -1,16 +1,25 @@
 import { singleton } from 'tsyringe'
+import { request, gql } from 'graphql-request'
+import activityResult from './types/activityResult'
 
 @singleton()
 export default class WikiUpdates {
-    database: string
+  url: string
 
-    constructor() {
-        console.log('I am database')
-        this.database = 'connected'
-    }
+  constructor() {
+    this.url = process.env.API_URL
+  }
 
-    query() {
-        return this.database
-    }
+  async query(): Promise<activityResult> {
+    const query = gql`
+      {
+        activities(lang: "en") {
+          wikiId
+          datetime
+        }
+      }
+    `
+    const response = await request(this.url, query)
+    return response
+  }
 }
-
