@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { Intents, Interaction, Message } from "discord.js";
-import { Client } from "discordx";
+import { Client, DIService } from "discordx";
+import { container } from 'tsyringe'
 import { dirname, importx } from "@discordx/importer";
 import { Koa } from "@discordx/koa";
 import 'dotenv/config'
@@ -24,7 +25,7 @@ export const client = new Client({
 client.once("ready", async () => {
     // make sure all guilds are in cache
     await client.guilds.fetch();
-    
+
     // init all application commands
     await client.initApplicationCommands({
     guild: { log: true },
@@ -43,6 +44,13 @@ client.once("ready", async () => {
   console.log("Bot started");
 });
 
+// client.on('ready', async () => {
+//     client.channels
+//         .fetch('974300909351882754')
+//         .then((channel: any) => {console.log(channel.name)})
+//         .catch(console.error)
+// })
+
 client.on("interactionCreate", (interaction: Interaction) => {
   client.executeInteraction(interaction);
 });
@@ -52,11 +60,13 @@ client.on("messageCreate", (message: Message) => {
 });
 
 async function run() {
+    
+  DIService.container = container
     // with cjs
-    // await importx(__dirname + "/{events,commands}/**/*.{ts,js}");
+    // await importx(dirname + "/{events,commands}/**/*.{ts,js}");
     // with ems
     await importx(
-        dirname(import.meta.url) + "/{events,commands,api}/**/*.{ts,js}"
+        dirname(import.meta.url) + "/{events,commands,api,services}/**/*.{ts,js}"
   );
 
   // let's start the bot
