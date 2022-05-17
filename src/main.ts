@@ -3,7 +3,6 @@ import { Intents, Interaction, Message } from "discord.js";
 import { Client, DIService } from "discordx";
 import { container } from 'tsyringe'
 import { dirname, importx } from "@discordx/importer";
-import { Koa } from "@discordx/koa";
 import 'dotenv/config'
 
 export const client = new Client({
@@ -44,13 +43,6 @@ client.once("ready", async () => {
   console.log("Bot started");
 });
 
-// client.on('ready', async () => {
-//     client.channels
-//         .fetch('974300909351882754')
-//         .then((channel: any) => {console.log(channel.name)})
-//         .catch(console.error)
-// })
-
 client.on("interactionCreate", (interaction: Interaction) => {
   client.executeInteraction(interaction);
 });
@@ -66,7 +58,7 @@ async function run() {
     // await importx(dirname + "/{events,commands}/**/*.{ts,js}");
     // with ems
     await importx(
-        dirname(import.meta.url) + "/{events,commands,api,services}/**/*.{ts,js}"
+        dirname(import.meta.url) + "/{events,commands,services}/**/*.{ts,js}"
   );
 
   // let's start the bot
@@ -75,22 +67,6 @@ async function run() {
   }
   await client.login(process.env.BOT_TOKEN); // provide your bot token
   
-  // ************* rest api section: start **********
-
-  // api: prepare server
-  const server = new Koa();
-
-  // api: need to build the api server first
-  await server.build();
-
-  // api: let's start the server now
-  const port = process.env.PORT ?? 3000;
-  server.listen(port, () => {
-    console.log(`discord api server started on ${port}`);
-    console.log(`visit localhost:${port}/guilds`);
-  });
-
-  // ************* rest api section: end **********
 }
 
 run();
