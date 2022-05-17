@@ -1,16 +1,16 @@
 import { NotBot } from '@discordx/utilities'
-import {  TextChannel } from 'discord.js'
+import { TextChannel } from 'discord.js'
 import type { ArgsOf } from 'discordx'
 import { Guard } from 'discordx'
 import { Discord, On, Client } from 'discordx'
 import { injectable } from 'tsyringe'
-import activityResult from '../sevices/types/activityResult.js'
-import wikiUpdates from '../sevices/wikiUpdates.js'
+import schedule from 'node-schedule'
+import WikiUpdates from '../services/wikiUpdates.js'
 
 @Discord()
 @injectable()
 export class AppDiscord {
-  constructor(private wikiUpdates: wikiUpdates) {
+  constructor(private wikiUpdates: WikiUpdates) {
     console.log('constructed me as a singleton and injected _database')
   }
 
@@ -33,17 +33,21 @@ export class AppDiscord {
 
   @On('ready')
   async isReady([client]: ArgsOf<'ready'>) {
-    let type = client
     const chan = client.channels.cache.get(
       process.env.CHANNEL_ID,
     ) as TextChannel
-    const result: activityResult = await this.wikiUpdates.query()
-    if (type) {
+
+    schedule.scheduleJob('* * * *', async () => {
+    console.log('running')
+    const res = await this.wikiUpdates.query()
+    const { result } = res
+
       if (result !== null) {
-        result.activities.forEach(e => {
+        console.log(result)
+        result?.activities?.forEach(e => {
           chan.send(`${process.env.PAGE_URL}${e.wikiId}`)
         })
       }
-    }
+    })
   }
 }
