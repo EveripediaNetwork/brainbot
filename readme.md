@@ -1,79 +1,25 @@
-# ⚠️ Moved to [discordx-templates](https://github.com/oceanroleplay/discordx-templates/tree/main/1-starter)
-
-## Contact Details
-
-GitHub: https://github.com/oceanroleplay
-
-Email: indianoceanroleplay@gmail.com
-
-Discord: Harry#5791
-
-Discord Server: https://discord-ts.js.org/discord
-___
-
-<div>
-  <p align="center">
-    <a href="https://discord-ts.js.org" target="_blank" rel="nofollow">
-      <img src="https://discord-ts.js.org/discord-ts.svg" width="546" />
-    </a>
-  </p>
-  
-  <p align="center">
-    <a href="https://discord.gg/yHQY9fexH9"
-      ><img
-        src="https://img.shields.io/discord/874802018361950248?color=5865F2&logo=discord&logoColor=white"
-        alt="Discord server"
-    /></a>
-    <a href="https://www.npmjs.com/package/discordx"
-      ><img
-        src="https://img.shields.io/npm/v/discordx.svg?maxAge=3600"
-        alt="NPM version"
-    /></a>
-    <a href="https://www.npmjs.com/package/discordx"
-      ><img
-        src="https://img.shields.io/npm/dt/discordx.svg?maxAge=3600"
-        alt="NPM downloads"
-    /></a>
-    <a href="https://github.com/oceanroleplay/discord.ts/actions"
-      ><img
-        src="https://github.com/oceanroleplay/discord.ts/workflows/Build/badge.svg"
-        alt="Build status"
-    /></a>
-    <a href="https://www.paypal.me/vijayxmeena"
-      ><img
-        src="https://img.shields.io/badge/donate-paypal-F96854.svg"
-        alt="paypal"
-    /></a>
-  </p>
-  <p align="center">
-    <b> Create a discord bot with TypeScript and Decorators! </b>
-  </p>
-</div>
+# 🧠 Brainbot
 
 # Content
 
-- [Demo](#demo)
+
 - [Installation](#installation)
 - [Use global command only](#use-global-command-only)
 - [Use CommonJS](#use-commonjs)
 - [Remove rest api server](#remove-rest-api-server)
-
-# Demo
-
-[CodeSandbox](https://codesandbox.io/s/github/oceanroleplay/discord.ts-example)
 
 # Installation
 
 **Clone Repository**
 
 ```bash
-git clone https://github.com/oceanroleplay/discord.ts-example
+git clone git@github.com:EveripediaNetwork/brainbot.git
 ```
 
 **Enter bot directory**
 
 ```bash
-cd discord.ts-example
+cd brainbot
 ```
 
 **Install Dependencies**
@@ -181,11 +127,3 @@ There are only a few lines of basic code, which you need to either comment out o
 1. Run `npm uninstall koa @koa/router @discordx/koa @types/koa @types/koa__router`
 
 The API server has been removed from the discord bot
-
-# ☎️ Need help?
-
-Ask in **[discord server](https://discord.gg/yHQY9fexH9)** or open a **[issue](https://github.com/oceanroleplay/discord.ts-example/issues)**
-
-# Thank you
-
-Show your support for [discordx](https://www.npmjs.com/package/discordx) by giving us a star on [github](https://github.com/oceanroleplay/discord.ts).
