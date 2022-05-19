@@ -10,8 +10,10 @@ import WikiUpdates from '../services/wikiUpdates.js'
 @Discord()
 @injectable()
 export class AppDiscord {
+  PAGE_URL?: string
+
   constructor(private wikiUpdates: WikiUpdates) {
-    console.log('constructed me as a singleton and injected _database')
+    this.PAGE_URL = process.env.PAGE_URL
   }
 
   @On('messageCreate')
@@ -37,15 +39,25 @@ export class AppDiscord {
       process.env.CHANNEL_ID,
     ) as TextChannel
 
-    schedule.scheduleJob('* * * *', async () => {
-    console.log('running')
-    const res = await this.wikiUpdates.query()
-    const { result } = res
+    //TODO: Get Last message sent to channel
 
-      if (result !== null) {
-        console.log(result)
+    schedule.scheduleJob('* * * *', async a => {
+      console.log('Calling for new wikis 🚀')
+
+      const time = await this.wikiUpdates.getTime()
+
+      let res
+
+      if (time) {
+        res = await this.wikiUpdates.query(time)
+      }
+
+      res = await this.wikiUpdates.query()
+      const { result } = res
+
+      if (result) {
         result?.activities?.forEach(e => {
-          chan.send(`${process.env.PAGE_URL}${e.wikiId}`)
+          chan.send(`${this.PAGE_URL}${e.wikiId}`)
         })
       }
     })
