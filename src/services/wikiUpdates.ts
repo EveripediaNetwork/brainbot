@@ -22,8 +22,7 @@ export default class WikiUpdates {
 
   async getTime(): Promise<number> {
     const cachedTime: number = await myCache.get('newUnix') || 0
-    const now = Math.floor(new Date().getTime() / 1000);
-    return cachedTime ? cachedTime : now;
+    return cachedTime ? cachedTime : Date.now();
   }
 
   async query(time: number): Promise<[wikiActivities]> {
