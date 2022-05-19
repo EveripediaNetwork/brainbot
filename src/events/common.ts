@@ -41,7 +41,7 @@ export class AppDiscord {
 
     //TODO: Get Last message sent to channel
 
-    schedule.scheduleJob('* * * *', async a => {
+    schedule.scheduleJob('* * * *', async () => {
       console.log('Calling for new wikis 🚀')
 
       const time = await this.wikiUpdates.getTime()

@@ -45,8 +45,7 @@ export default class WikiUpdates {
     await this.setTime(newUnixTime)
 
     if (time) {
-        result = result.activities.filter((wiki: wikiActivities) => {
-          const tt = this.getUnixtime(wiki.datetime)
+      result = result.activities.filter((wiki: wikiActivities) => {
         return this.getUnixtime(wiki.datetime) > time
       })
     }
