@@ -1,13 +1,8 @@
 import { singleton } from 'tsyringe'
 import { request, gql } from 'graphql-request'
-import { wikiActivities, activityResult } from './types/activityResult'
+import { wikiActivities } from './types/activityResult'
 import NodeCache from 'node-cache'
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
-
-interface scheduleResponse {
-  result: activityResult
-  newUnixTime: number | undefined
-}
 
 @singleton()
 export default class WikiUpdates {
@@ -17,7 +12,7 @@ export default class WikiUpdates {
     this.url = process.env.API_URL
   }
 
-  getUnixtime(time: string) {
+  getUnixtime(time: string): number {
     return Math.floor(new Date(time).getTime() / 1000)
   }
 
@@ -25,16 +20,19 @@ export default class WikiUpdates {
     myCache.set('newUnix', value, 100)
   }
 
-  async getTime(): Promise<number | undefined> {
-    return await myCache.get('newUnix')
+  async getTime(): Promise<number> {
+    const cachedTime: number = await myCache.get('newUnix') || 0
+    const now = Math.floor(new Date().getTime() / 1000);
+    return cachedTime ? cachedTime : now;
   }
 
-  async query(time?: number): Promise<scheduleResponse> {
+  async query(time: number): Promise<[wikiActivities]> {
     let newUnixTime
     const query = gql`
       {
         activities(lang: "en") {
           wikiId
+          type
           datetime
         }
       }
@@ -42,14 +40,13 @@ export default class WikiUpdates {
 
     let result = await request(this.url, query)
     newUnixTime = this.getUnixtime(result.activities[0].datetime)
+    console.log(newUnixTime)
     await this.setTime(newUnixTime)
 
-    if (time) {
-      result = result.activities.filter((wiki: wikiActivities) => {
-        return this.getUnixtime(wiki.datetime) > time
-      })
-    }
+    result = result.activities.filter((wiki: wikiActivities) => {
+      return this.getUnixtime(wiki.datetime) > time
+    })
 
-    return { result, newUnixTime }
+    return result
   }
 }

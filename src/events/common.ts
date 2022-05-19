@@ -1,8 +1,7 @@
 import { NotBot } from '@discordx/utilities'
 import { TextChannel } from 'discord.js'
 import type { ArgsOf } from 'discordx'
-import { Guard } from 'discordx'
-import { Discord, On, Client } from 'discordx'
+import { Client, Discord, Guard, On } from 'discordx'
 import { injectable } from 'tsyringe'
 import schedule from 'node-schedule'
 import WikiUpdates from '../services/wikiUpdates.js'
@@ -39,27 +38,17 @@ export class AppDiscord {
       process.env.CHANNEL_ID,
     ) as TextChannel
 
-    //TODO: Get Last message sent to channel
+    await this.wikiUpdates.getTime()
 
     schedule.scheduleJob('* * * *', async () => {
       console.log('Calling for new wikis 🚀')
 
       const time = await this.wikiUpdates.getTime()
-
-      let res
-
-      if (time) {
-        res = await this.wikiUpdates.query(time)
-      }
-
-      res = await this.wikiUpdates.query()
-      const { result } = res
-
-      if (result) {
-        result?.activities?.forEach(e => {
-          chan.send(`${this.PAGE_URL}${e.wikiId}`)
+      console.log(time)
+      const response = await this.wikiUpdates.query(time)
+        response.forEach(e => {
+          chan.send(`🚀 ${e.type}: ${this.PAGE_URL}${e.wikiId}`)
         })
-      }
     })
   }
 }
