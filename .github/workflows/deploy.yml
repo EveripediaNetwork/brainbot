@@ -2,7 +2,7 @@ name: deploy
 
 on:
   push:
-    branches: [main]
+    branches: [wiki-ipdates]
 
 jobs:
   launch-bot:
@@ -16,7 +16,7 @@ jobs:
         run: npm run build
 
       - name: SSH Remote Commands
-        uses: appleboy/ssh-client
+        uses: appleboy/ssh-action@v0.1.4
         with:
           HOST: ${{ secrets.HOST }}
           USERNAME: ubuntu

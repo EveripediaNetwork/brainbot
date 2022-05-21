@@ -1,12 +1,15 @@
-# 🧠 Brainbot
+<h1 align="center">
+  <br>
+  <a href="https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop"><img src="https://ipfs.everipedia.org/ipfs/QmeYq5z5431h5Vdh6xgHns1Lu9V73PSsitNfnwyJUEAJ8G" alt="BrainDAO" width="35%" height="35%"></a>
+  <br>
+  Everipedia Brain Bot
+  <br>
+</h1>
 
-# Content
+# Overview
 
+Everipedia brain bot is a bot built on the discord api, it sends live wiki updates in a discord channel. more updates coming soon!!
 
-- [Installation](#installation)
-- [Use global command only](#use-global-command-only)
-- [Use CommonJS](#use-commonjs)
-- [Remove rest api server](#remove-rest-api-server)
 
 # Installation
 
@@ -58,61 +61,4 @@ export BOT_TOKEN=REPLACE_THIS_WITH_YOUR_BOT_TOKEN
 npm run serve
 ```
 
-you are done, you will see your bot up and running. For detailed installation guide, please [see this](https://oceanroleplay.github.io/discord.ts/docs/installation)
-
-# Use global command only
-
-This repository uses guild commands instead of global commands by default. This is because global command needs approximately 15 minutes to update itself every time.
-
-## 1. How do I use global command only?
-
-### comment [this line in main.ts](https://github.com/oceanroleplay/discord.ts-example/blob/main/src/main.ts#L18)
-
-## 2. How do I make specific guild command?
-
-### use [@Guild](https://discord-ts.js.org/docs/decorators/general/guild) decorator on [@Slash](https://discord-ts.js.org/docs/decorators/commands/slash), [check more information](https://discord-ts.js.org/docs/decorators/general/guild)
-
-# Use CommonJS
-
-This repo is targeted to use ECMAScript modules by default. Follow these steps to use CommonJS.
-
-## Update package.json
-
-```json
-{
-  // ...
-  "type": "commonjs",
-  // ...
-  "scripts": {
-    "build": "tsc",
-    "dev": "ts-node src/main.ts",
-    "start": "nodemon --exec ts-node src/main.ts",
-    "serve": "node build/main.js"
-  }
-  // ...
-}
-```
-
-## Update tsconfig.json
-
-```json
-{
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "CommonJS"
-    // ...
-  }
-}
-```
-
-## Update main.ts
-
-```ts
-async function run() {
-  // with cjs
-  await importx(__dirname + "/{events,commands}/**/*.{ts,js}");
-  // with ems
-  // await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
-  client.login(process.env.BOT_TOKEN ?? ""); // provide your bot token
-}
-```
+Join us on our [Official Discord Server](https://discord.gg/MmysbVj9)!
