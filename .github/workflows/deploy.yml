@@ -2,7 +2,7 @@ name: deploy
 
 on:
   push:
-    branches: [wiki-updates]
+    branches: [main]
 
 jobs:
   launch-bot:
@@ -10,7 +10,7 @@ jobs:
     steps:
 
       - name: Installing dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build
         run: npm run build
