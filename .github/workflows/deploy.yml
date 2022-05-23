@@ -19,8 +19,8 @@ jobs:
         uses: appleboy/ssh-action@v0.1.4
         with:
           HOST: ${{ secrets.HOST }}
-          USERNAME: ubuntu
-          PASSWORD: ${{ secrets.PASSWORD }}
+          USERNAME: ${{ secrets.USERNAME }}
+          KEY: ${{ secrets.KEY }}
           script: |
             cd brainbot
             git pull
