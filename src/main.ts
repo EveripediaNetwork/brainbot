@@ -1,8 +1,8 @@
 import "reflect-metadata";
 import { Intents, Interaction, Message } from "discord.js";
-import { Client } from "discordx";
+import { Client, DIService } from "discordx";
+import { container } from 'tsyringe'
 import { dirname, importx } from "@discordx/importer";
-import { Koa } from "@discordx/koa";
 import 'dotenv/config'
 
 export const client = new Client({
@@ -24,7 +24,7 @@ export const client = new Client({
 client.once("ready", async () => {
     // make sure all guilds are in cache
     await client.guilds.fetch();
-    
+
     // init all application commands
     await client.initApplicationCommands({
     guild: { log: true },
@@ -52,11 +52,13 @@ client.on("messageCreate", (message: Message) => {
 });
 
 async function run() {
+    
+  DIService.container = container
     // with cjs
-    // await importx(__dirname + "/{events,commands}/**/*.{ts,js}");
+    // await importx(dirname + "/{events,commands}/**/*.{ts,js}");
     // with ems
     await importx(
-        dirname(import.meta.url) + "/{events,commands,api}/**/*.{ts,js}"
+        dirname(import.meta.url) + "/{events,commands,services}/**/*.{ts,js}"
   );
 
   // let's start the bot
@@ -65,22 +67,6 @@ async function run() {
   }
   await client.login(process.env.BOT_TOKEN); // provide your bot token
   
-  // ************* rest api section: start **********
-
-  // api: prepare server
-  const server = new Koa();
-
-  // api: need to build the api server first
-  await server.build();
-
-  // api: let's start the server now
-  const port = process.env.PORT ?? 3000;
-  server.listen(port, () => {
-    console.log(`discord api server started on ${port}`);
-    console.log(`visit localhost:${port}/guilds`);
-  });
-
-  // ************* rest api section: end **********
 }
 
 run();

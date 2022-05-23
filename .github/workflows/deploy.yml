@@ -1,0 +1,29 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  launch-bot:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Installing dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: SSH Remote Commands
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          HOST: ${{ secrets.HOST }}
+          USERNAME: ${{ secrets.USERNAME }}
+          KEY: ${{ secrets.KEY }}
+          script: |
+            cd brainbot
+            git pull
+            npm i
+            pm2 update
+
