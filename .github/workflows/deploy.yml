@@ -44,5 +44,6 @@ jobs:
             cd brainbot
             git pull
             npm i
+            npm run build
             pm2 update
 
