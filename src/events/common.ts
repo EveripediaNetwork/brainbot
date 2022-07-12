@@ -5,6 +5,7 @@ import { Client, Discord, Guard, On } from 'discordx'
 import { injectable } from 'tsyringe'
 import schedule from 'node-schedule'
 import WikiUpdates from '../services/wikiUpdates.js'
+import { ChannelTypes } from '../services/types/activityResult.js'
 
 @Discord()
 @injectable()
@@ -47,15 +48,15 @@ export class AppDiscord {
 
     client.channels.cache.get(channels.dev) as TextChannel
 
-    schedule.scheduleJob({ second: '2' }, async () => {
-
+    schedule.scheduleJob('* * * *', async () => {
       const time = await this.wikiUpdates.getTime()
 
+      console.log('Calling for new wikis 🚀')
+      console.log(time)
+
       for (const channel in channels) {
-
-        if (channel === 'dev') {
-
-          console.log(`dev channel is ${channels[channel]}`)
+        if (channel === ChannelTypes.DEV) {
+          //   console.log(`dev channel is ${channels[channel]}`)
           const devChannel = client.channels.cache.get(
             channels[channel],
           ) as TextChannel
@@ -64,11 +65,9 @@ export class AppDiscord {
           response.forEach(e => {
             devChannel.send(`🚀 ${e.type}: ${this.DEV_URL}${e.wikiId}`)
           })
-
         }
-        if (channel === 'prod') {
-
-          console.log(`prod channel is ${channels[channel]}`)
+        if (channel === ChannelTypes.PROD) {
+          //   console.log(`prod channel is ${channels[channel]}`)
           const prodChannel = client.channels.cache.get(
             channels[channel],
           ) as TextChannel
@@ -77,7 +76,6 @@ export class AppDiscord {
           response.forEach(e => {
             prodChannel.send(`🚀 ${e.type}: ${this.PROD_URL}${e.wikiId}`)
           })
-
         }
       }
     })

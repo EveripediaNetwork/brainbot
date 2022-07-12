@@ -4,3 +4,7 @@ export interface wikiActivities {
   type: string
 }
 
+export enum ChannelTypes {
+    DEV = 'DEV',
+    PROD = 'PROD'
+}

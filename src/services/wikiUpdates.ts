@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { request, gql } from 'graphql-request'
-import { wikiActivities } from './types/activityResult'
+import { ChannelTypes, wikiActivities } from './types/activityResult'
 import NodeCache from 'node-cache'
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
@@ -52,11 +52,11 @@ export default class WikiUpdates {
     
     let result
 
-    if (channelType === 'dev') {
+    if (channelType === ChannelTypes.DEV) {
       result = await request(this.dev_url, query)
     }
 
-    if (channelType === 'prod') {
+    if (channelType === ChannelTypes.PROD) {
       result = await request(this.prod_url, query)
     }
 
