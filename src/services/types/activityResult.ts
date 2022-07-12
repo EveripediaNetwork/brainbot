@@ -3,3 +3,4 @@ export interface wikiActivities {
   datetime: string
   type: string
 }
+

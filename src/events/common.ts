@@ -10,9 +10,13 @@ import WikiUpdates from '../services/wikiUpdates.js'
 @injectable()
 export class AppDiscord {
   PAGE_URL?: string
+  DEV_URL?: string
+  PROD_URL?: string
 
   constructor(private wikiUpdates: WikiUpdates) {
     this.PAGE_URL = process.env.PAGE_URL
+    this.PROD_URL = process.env.PROD_URL
+    this.DEV_URL = process.env.DEV_URL
   }
 
   @On('messageCreate')
@@ -26,7 +30,7 @@ export class AppDiscord {
         message.reply(`Hello`)
         break
       default:
-        message.reply('Command not found')
+        message.reply('Awaiting new wikis ......')
         break
     }
     console.log('Message Deleted', client.user?.username, message.content)
@@ -35,29 +39,45 @@ export class AppDiscord {
   @On('ready')
   async isReady([client]: ArgsOf<'ready'>) {
     const channels = JSON.parse(process.env.CHANNELS || '')
-    const chan = client.channels.cache.get(
-      process.env.CHANNEL_ID,
-    ) as TextChannel
+    // const chan = client.channels.cache.get(
+    //   process.env.CHANNEL_ID,
+    // ) as TextChannel
 
-    // console.log(channels.dev)
     await this.wikiUpdates.getTime()
 
     client.channels.cache.get(channels.dev) as TextChannel
 
-    schedule.scheduleJob({second: '2'}, async () => {
+    schedule.scheduleJob({ second: '2' }, async () => {
+
+      const time = await this.wikiUpdates.getTime()
+
       for (const channel in channels) {
+
         if (channel === 'dev') {
+
           console.log(`dev channel is ${channels[channel]}`)
-          const d = client.channels.cache.get(channels[channel]) as TextChannel
+          const devChannel = client.channels.cache.get(
+            channels[channel],
+          ) as TextChannel
 
-          //   const response = await this.wikiUpdates.query(time, channel)
+          const response = await this.wikiUpdates.query(time, channel)
+          response.forEach(e => {
+            devChannel.send(`🚀 ${e.type}: ${this.DEV_URL}${e.wikiId}`)
+          })
 
-          d.send('the channel is dev')
         }
         if (channel === 'prod') {
+
           console.log(`prod channel is ${channels[channel]}`)
-          const p = client.channels.cache.get(channels[channel]) as TextChannel
-          p.send('this channel is prod')
+          const prodChannel = client.channels.cache.get(
+            channels[channel],
+          ) as TextChannel
+
+          const response = await this.wikiUpdates.query(time, channel)
+          response.forEach(e => {
+            prodChannel.send(`🚀 ${e.type}: ${this.PROD_URL}${e.wikiId}`)
+          })
+
         }
       }
     })

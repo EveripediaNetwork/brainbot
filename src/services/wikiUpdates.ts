@@ -7,9 +7,13 @@ const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 @singleton()
 export default class WikiUpdates {
   url: string
+  prod_url: string
+  dev_url: string
 
   constructor() {
     this.url = process.env.API_URL
+    this.prod_url = process.env.PROD_API_URL || ''
+    this.dev_url = process.env.DEV_API_URL || ''
   }
 
   getUnixtime(time: string): number {
@@ -21,8 +25,8 @@ export default class WikiUpdates {
   }
 
   async getTime(): Promise<number> {
-    const cachedTime: number = await myCache.get('newUnix') || 0
-    return cachedTime ? cachedTime : Date.now();
+    const cachedTime: number = (await myCache.get('newUnix')) || 0
+    return cachedTime ? cachedTime : Date.now()
   }
 
   async query(time: number, channelType: string): Promise<[wikiActivities]> {
@@ -37,7 +41,25 @@ export default class WikiUpdates {
       }
     `
 
-    let result = await request(this.url, query)
+    // let result = await request(this.url, query)
+    // newUnixTime = this.getUnixtime(result.activities[0].datetime)
+    // console.log(newUnixTime)
+    // await this.setTime(newUnixTime)
+
+    // result = result.activities.filter((wiki: wikiActivities) => {
+    //   return this.getUnixtime(wiki.datetime) > time
+    // })
+    
+    let result
+
+    if (channelType === 'dev') {
+      result = await request(this.dev_url, query)
+    }
+
+    if (channelType === 'prod') {
+      result = await request(this.prod_url, query)
+    }
+
     newUnixTime = this.getUnixtime(result.activities[0].datetime)
     console.log(newUnixTime)
     await this.setTime(newUnixTime)
