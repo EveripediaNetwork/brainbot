@@ -34,21 +34,45 @@ export class AppDiscord {
 
   @On('ready')
   async isReady([client]: ArgsOf<'ready'>) {
+    const channels = JSON.parse(process.env.CHANNELS || '')
     const chan = client.channels.cache.get(
       process.env.CHANNEL_ID,
     ) as TextChannel
 
+    // console.log(channels.dev)
     await this.wikiUpdates.getTime()
 
-    schedule.scheduleJob('* * * *', async () => {
-      console.log('Calling for new wikis 🚀')
+    client.channels.cache.get(channels.dev) as TextChannel
 
-      const time = await this.wikiUpdates.getTime()
-      console.log(time)
-      const response = await this.wikiUpdates.query(time)
-        response.forEach(e => {
-          chan.send(`🚀 ${e.type}: ${this.PAGE_URL}${e.wikiId}`)
-        })
+    schedule.scheduleJob({second: '2'}, async () => {
+      for (const channel in channels) {
+        if (channel === 'dev') {
+          console.log(`dev channel is ${channels[channel]}`)
+          const d = client.channels.cache.get(channels[channel]) as TextChannel
+
+          //   const response = await this.wikiUpdates.query(time, channel)
+
+          d.send('the channel is dev')
+        }
+        if (channel === 'prod') {
+          console.log(`prod channel is ${channels[channel]}`)
+          const p = client.channels.cache.get(channels[channel]) as TextChannel
+          p.send('this channel is prod')
+        }
+      }
     })
+
+    // schedule.scheduleJob('* * * *', async () => {
+    //   console.log('Calling for new wikis 🚀')
+
+    //   const time = await this.wikiUpdates.getTime()
+
+    //   console.log(time)
+
+    //   const response = await this.wikiUpdates.query(time)
+    //   response.forEach(e => {
+    //     chan.send(`🚀 ${e.type}: ${this.PAGE_URL}${e.wikiId}`)
+    //   })
+    // })
   }
 }

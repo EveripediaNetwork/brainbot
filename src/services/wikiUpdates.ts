@@ -25,7 +25,7 @@ export default class WikiUpdates {
     return cachedTime ? cachedTime : Date.now();
   }
 
-  async query(time: number): Promise<[wikiActivities]> {
+  async query(time: number, channelType: string): Promise<[wikiActivities]> {
     let newUnixTime
     const query = gql`
       {
@@ -45,6 +45,7 @@ export default class WikiUpdates {
     result = result.activities.filter((wiki: wikiActivities) => {
       return this.getUnixtime(wiki.datetime) > time
     })
+
 
     return result
   }
