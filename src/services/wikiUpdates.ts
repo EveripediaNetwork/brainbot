@@ -6,12 +6,10 @@ const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
 @singleton()
 export default class WikiUpdates {
-  url: string
   prod_url: string
   dev_url: string
 
   constructor() {
-    this.url = process.env.API_URL
     this.prod_url = process.env.PROD_API_URL || ''
     this.dev_url = process.env.DEV_API_URL || ''
   }
@@ -40,15 +38,6 @@ export default class WikiUpdates {
         }
       }
     `
-
-    // let result = await request(this.url, query)
-    // newUnixTime = this.getUnixtime(result.activities[0].datetime)
-    // console.log(newUnixTime)
-    // await this.setTime(newUnixTime)
-
-    // result = result.activities.filter((wiki: wikiActivities) => {
-    //   return this.getUnixtime(wiki.datetime) > time
-    // })
     
     let result
 
