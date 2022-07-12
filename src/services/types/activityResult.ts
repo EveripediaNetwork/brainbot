@@ -3,3 +3,8 @@ export interface wikiActivities {
   datetime: string
   type: string
 }
+
+export enum ChannelTypes {
+    DEV = 'DEV',
+    PROD = 'PROD'
+}
