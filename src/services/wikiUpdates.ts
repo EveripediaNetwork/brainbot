@@ -1,6 +1,6 @@
 import { singleton } from 'tsyringe'
 import { request, gql } from 'graphql-request'
-import { ChannelTypes, wikiActivities } from './types/activityResult'
+import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
