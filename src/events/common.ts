@@ -1,4 +1,4 @@
-import { NotBot } from '@discordx/utilities'
+mport { NotBot } from '@discordx/utilities'
 import { TextChannel } from 'discord.js'
 import type { ArgsOf } from 'discordx'
 import { Client, Discord, Guard, On } from 'discordx'
@@ -37,40 +37,63 @@ export class AppDiscord {
 
   @On('ready')
   async isReady([client]: ArgsOf<'ready'>) {
-    const channels = JSON.parse(process.env.CHANNELS || '')
+    const channelIds = JSON.parse(process.env.CHANNELS || '')
 
-    await this.wikiUpdates.getTime()
+    const devChannel = client.channels.cache.get(channelIds.DEV) as TextChannel
+    const prodChannel = client.channels.cache.get(
+      channelIds.PROD,
+    ) as TextChannel
 
-    client.channels.cache.get(channels.dev) as TextChannel
+    // await this.wikiUpdates.getTime()
 
-    schedule.scheduleJob('* * * *', async () => {
-      const time = await this.wikiUpdates.getTime()
-
+    schedule.scheduleJob('*/20 * * * * *', async () => {
       console.log('Calling for new wikis 🚀')
-      console.log(time)
+      // console.log(time)
 
-      for (const channel in channels) {
-        if (channel === ChannelTypes.DEV) {
-          const devChannel = client.channels.cache.get(
-            channels[channel],
-          ) as TextChannel
-
-          const response = await this.wikiUpdates.query(time, channel)
-          response.forEach(e => {
-            devChannel.send(`🚀 ${e.type}: ${this.DEV_URL}${e.wikiId}`)
-          })
-        }
-        if (channel === ChannelTypes.PROD) {
-          const prodChannel = client.channels.cache.get(
-            channels[channel],
-          ) as TextChannel
-
-          const response = await this.wikiUpdates.query(time, channel)
-          response.forEach(e => {
-            prodChannel.send(`🚀 ${e.type}: ${this.PROD_URL}${e.wikiId}`)
-          })
-        }
+      const sendDevUpdates = async () => {
+        const time = await this.wikiUpdates.getTime('D')
+        console.log('dev epoch', time)
+        const response = await this.wikiUpdates.query(time, 'DEV')
+        response.forEach(e => {
+          devChannel.send(`🚀 ${e.type}: ${this.DEV_URL}${e.wikiId}`)
+        })
       }
+      const sendProdUpdates = async () => {
+        const time = await this.wikiUpdates.getTime('P')
+        console.log('prod epoch', time)
+        const response = await this.wikiUpdates.query(time, 'PROD')
+        response.forEach(e => {
+          prodChannel.send(`🚀 ${e.type}: ${this.PROD_URL}${e.wikiId}`)
+        })
+      }
+
+      await sendDevUpdates()
+      await sendProdUpdates()
+
+      //   for await (const channel of Object.keys(channelIds)) {
+
+      //     if (channel === ChannelTypes.DEV) {
+      //       const devChannel = client.channels.cache.get(
+      //         channelIds[channel],
+      //       ) as TextChannel
+
+      //       const response = await this.wikiUpdates.query(time, channel)
+      //       response.forEach(e => {
+      //         devChannel.send(`🚀 ${e.type}: ${this.DEV_URL}${e.wikiId}`)
+      //       })
+      //     }
+
+      //     if (channel === ChannelTypes.PROD) {
+      //       const prodChannel = client.channels.cache.get(
+      //         channelIds[channel],
+      //       ) as TextChannel
+
+      //       const response = await this.wikiUpdates.query(time, channel)
+      //       response.forEach(e => {
+      //         prodChannel.send(`🚀 ${e.type}: ${this.PROD_URL}${e.wikiId}`)
+      //       })
+      //     }
+      //   }
     })
   }
 }
