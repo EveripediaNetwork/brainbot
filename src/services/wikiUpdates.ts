@@ -18,27 +18,12 @@ export default class WikiUpdates {
     return Math.floor(new Date(time).getTime() / 1000)
   }
 
-  async setTime(value: number | undefined, level?: string) {
-    // myCache.set('newUnix', value, 100)
-    if (level === 'D') {
-      myCache.set('newUnixD', value, 100)
-    } else if (level === 'P') {
-      myCache.set('newUnixP', value, 100)
-    } else {
-      myCache.set('newUnix', value, 100)
-    }
+  async setTime(value: number | undefined, channelType: ChannelTypes) {
+      myCache.set(`newUnix-${channelType}`, value, 100)
   }
 
-  async getTime(n?: string): Promise<number> {
-    // const cachedTime: number = (await myCache.get('newUnix')) || 0
-    let cachedTime
-    if (n === 'D') {
-      cachedTime = (await myCache.get('newUnixD')) || 0
-    } else if (n === 'P') {
-      cachedTime = (await myCache.get('newUnixP')) || 0
-    } else {
-      cachedTime = (await myCache.get(`newUnix${n}`)) || 0
-    }
+  async getTime(channelType: ChannelTypes): Promise<number> {
+    const cachedTime: number = (await myCache.get(`newUnix-${channelType}`)) || 0
     return cachedTime ? cachedTime : Date.now()
   }
 
@@ -60,19 +45,15 @@ export default class WikiUpdates {
       result = await request(this.dev_url, query)
       newUnixTime = this.getUnixtime(result.activities[0].datetime)
       console.log(newUnixTime)
-      await this.setTime(newUnixTime, 'D')
+      await this.setTime(newUnixTime, ChannelTypes.DEV)
     }
 
     if (channelType === ChannelTypes.PROD) {
       result = await request(this.prod_url, query)
       newUnixTime = this.getUnixtime(result.activities[0].datetime)
       console.log(newUnixTime)
-      await this.setTime(newUnixTime, 'P')
+      await this.setTime(newUnixTime, ChannelTypes.PROD)
     }
-
-    newUnixTime = this.getUnixtime(result.activities[0].datetime)
-    console.log(newUnixTime)
-    await this.setTime(newUnixTime)
 
     result = result.activities.filter((wiki: wikiActivities) => {
       return this.getUnixtime(wiki.datetime) > time

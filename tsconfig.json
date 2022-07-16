@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
+    "importHelpers": true,
     "target": "ESNext",
     "module": "ESNext",
     "outDir": "build",
+    "noImplicitAny": true,
+    "sourceMap": true,
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
@@ -16,6 +19,5 @@
     "skipLibCheck": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "./global.d.ts"],
-  "exclude": ["build", "node_modules"]
+  "exclude": ["node_modules"]
 }

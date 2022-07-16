@@ -1,19 +1,19 @@
-mport { NotBot } from '@discordx/utilities'
+import { NotBot } from '@discordx/utilities'
 import { TextChannel } from 'discord.js'
 import type { ArgsOf } from 'discordx'
 import { Client, Discord, Guard, On } from 'discordx'
 import { injectable } from 'tsyringe'
 import schedule from 'node-schedule'
-import WikiUpdates from '../services/wikiUpdates.js'
+import Updates from '../utils/sendUpdates.js'
 import { ChannelTypes } from '../services/types/activityResult.js'
 
 @Discord()
 @injectable()
 export class AppDiscord {
-  DEV_URL?: string
-  PROD_URL?: string
+  PROD_URL: string
+  DEV_URL: string
 
-  constructor(private wikiUpdates: WikiUpdates) {
+  constructor(private updates: Updates) {
     this.PROD_URL = process.env.PROD_URL
     this.DEV_URL = process.env.DEV_URL
   }
@@ -44,56 +44,13 @@ export class AppDiscord {
       channelIds.PROD,
     ) as TextChannel
 
-    // await this.wikiUpdates.getTime()
-
-    schedule.scheduleJob('*/20 * * * * *', async () => {
+    schedule.scheduleJob('*/6 * * * * *', async () => {
       console.log('Calling for new wikis 🚀')
-      // console.log(time)
 
-      const sendDevUpdates = async () => {
-        const time = await this.wikiUpdates.getTime('D')
-        console.log('dev epoch', time)
-        const response = await this.wikiUpdates.query(time, 'DEV')
-        response.forEach(e => {
-          devChannel.send(`🚀 ${e.type}: ${this.DEV_URL}${e.wikiId}`)
-        })
-      }
-      const sendProdUpdates = async () => {
-        const time = await this.wikiUpdates.getTime('P')
-        console.log('prod epoch', time)
-        const response = await this.wikiUpdates.query(time, 'PROD')
-        response.forEach(e => {
-          prodChannel.send(`🚀 ${e.type}: ${this.PROD_URL}${e.wikiId}`)
-        })
-      }
+      await this.updates.sendUpdates(devChannel, ChannelTypes.DEV, this.DEV_URL)
 
-      await sendDevUpdates()
-      await sendProdUpdates()
+      await this.updates.sendUpdates(prodChannel, ChannelTypes.PROD, this.PROD_URL)
 
-      //   for await (const channel of Object.keys(channelIds)) {
-
-      //     if (channel === ChannelTypes.DEV) {
-      //       const devChannel = client.channels.cache.get(
-      //         channelIds[channel],
-      //       ) as TextChannel
-
-      //       const response = await this.wikiUpdates.query(time, channel)
-      //       response.forEach(e => {
-      //         devChannel.send(`🚀 ${e.type}: ${this.DEV_URL}${e.wikiId}`)
-      //       })
-      //     }
-
-      //     if (channel === ChannelTypes.PROD) {
-      //       const prodChannel = client.channels.cache.get(
-      //         channelIds[channel],
-      //       ) as TextChannel
-
-      //       const response = await this.wikiUpdates.query(time, channel)
-      //       response.forEach(e => {
-      //         prodChannel.send(`🚀 ${e.type}: ${this.PROD_URL}${e.wikiId}`)
-      //       })
-      //     }
-      //   }
     })
   }
 }
