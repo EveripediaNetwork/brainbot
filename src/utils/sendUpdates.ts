@@ -1,8 +1,10 @@
+import {
+  wikiActivities,
+  ChannelTypes,
+} from './../services/types/activityResult'
 import { MessageEmbed, TextChannel } from 'discord.js'
-import urlMetadata from 'url-metadata'
 import { singleton } from 'tsyringe'
 import WikiUpdates from '../services/wikiUpdates.js'
-import { ChannelTypes, wikiActivities } from '../services/types/activityResult'
 
 @singleton()
 export default class Updates {
@@ -15,26 +17,27 @@ export default class Updates {
     this.META_URL = process.env.META_URL
   }
 
-  private async messageStyle(
-    status: string,
-    url: string,
-    id: string,
-    editor: any,
-    icon: string,
-  ) {
-    const meta = await urlMetadata(`${url}${id}`)
+  private async messageStyle(result: wikiActivities, url: string) {
+    const content = Object.values(result.content)
     const exampleEmbed = this.messageEmbed
-      .setColor(status === 'CREATED' ? '#00ff00' : '#e8e805')
-      .setTitle(meta['og:title'])
-      .setURL(`${url}${id}`)
-      .setDescription(meta['og:description'])
-      .setImage(meta.image)
+      .setColor(result.type === 'CREATED' ? '#00ff00' : '#e8e805')
+      .setTitle(content[0].title)
+      .setURL(`${url}${result.wikiId}`)
+      .setDescription(content[0].summary)
+      .setImage(
+        `${this.META_URL}${content[0].images[0].id}`,
+      )
       .setTimestamp()
       .setFooter({
-        text: `${status.toLowerCase()} by ${editor}  `,
-        iconURL: `${this.META_URL}${icon}`,
+        text: `${result.type.toLowerCase()} by ${
+          result.user.profile?.username ? result.user.profile.username : 'user'
+        }  `,
+        iconURL: `${this.META_URL}${
+          result.user.profile?.avatar
+            ? result.user.profile.avatar
+            : 'QmXqCRoaA61P3KamAd8UgGYyrcdb5Fu2REL6jrcVBSawwE'
+        }`,
       })
-
     return exampleEmbed
   }
 
@@ -46,20 +49,15 @@ export default class Updates {
     const time = await this.wikiUpdates.getTime(channelType)
     const response = await this.wikiUpdates.query(time, channelType)
 
-    response.forEach(
-      async (e: wikiActivities ) => {
-        channelId.send({
-          embeds: [
-            await this.messageStyle(
-              e.type,
-              url,
-              e.wikiId,
-              e.user.profile?.username? e.user.profile.username : 'user',
-              e.user.profile?.avatar? e.user.profile.avatar : 'QmXqCRoaA61P3KamAd8UgGYyrcdb5Fu2REL6jrcVBSawwE' ,
-            ),
-          ],
-        })
-      },
-    )
+    response.forEach(async (e: wikiActivities) => {
+      channelId.send({
+        embeds: [
+          await this.messageStyle(
+            e,
+            url,
+          ),
+        ],
+      })
+    })
   }
 }

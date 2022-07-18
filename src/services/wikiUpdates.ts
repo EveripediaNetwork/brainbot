@@ -28,7 +28,10 @@ export default class WikiUpdates {
     return cachedTime ? cachedTime : Date.now()
   }
 
-  async query(time: number, channelType: string): Promise<[wikiActivities]> {
+  async query(
+    time: number,
+    channelType: ChannelTypes,
+  ): Promise<[wikiActivities]> {
     let newUnixTime
     const query = gql`
       {
@@ -43,30 +46,37 @@ export default class WikiUpdates {
               avatar
             }
           }
+          content {
+            title
+            summary
+            images {
+              id
+            }
+          }
         }
       }
     `
-    
+
     let result
 
     if (channelType === ChannelTypes.DEV) {
-          result = await request(this.DEV_API_URL, query)
+      result = await request(this.DEV_API_URL, query)
       newUnixTime = this.getUnixtime(result.activities[0].datetime)
-      console.log(newUnixTime)
+      console.log(`${channelType} time`, newUnixTime)
       await this.setTime(newUnixTime, ChannelTypes.DEV)
     }
 
     if (channelType === ChannelTypes.PROD) {
       result = await request(this.PROD_API_URL, query)
       newUnixTime = this.getUnixtime(result.activities[0].datetime)
-      console.log(newUnixTime)
+      console.log(`${channelType} time`, newUnixTime)
       await this.setTime(newUnixTime, ChannelTypes.PROD)
     }
 
     result = result.activities.filter((wiki: wikiActivities) => {
       return this.getUnixtime(wiki.datetime) > time
     })
-
+    
     return result
   }
 }
