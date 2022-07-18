@@ -37,7 +37,7 @@ export class AppDiscord {
 
   @On('ready')
   async isReady([client]: ArgsOf<'ready'>) {
-    const channelIds = JSON.parse(process.env.CHANNELS || '')
+    const channelIds = JSON.parse(process.env.CHANNELS)
 
     const devChannel = client.channels.cache.get(channelIds.DEV) as TextChannel
     const prodChannel = client.channels.cache.get(

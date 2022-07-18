@@ -2,15 +2,24 @@ export interface wikiActivities {
   wikiId: string
   datetime: string
   type: string
+  content: [
+    {
+      summary: string
+      images: [{ id: string }]
+      title: string
+    },
+  ]
   user: {
-    profile?:  {
-        username?: string 
-        avatar?: string 
+    id: string
+    profile?: {
+      username?: string
+      avatar?: string
     } | null
   }
 }
 
 export enum ChannelTypes {
-    DEV = 'DEV',
-    PROD = 'PROD'
+  DEV = 'DEV',
+  PROD = 'PROD',
 }
+
