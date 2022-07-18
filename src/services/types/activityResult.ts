@@ -3,10 +3,10 @@ export interface wikiActivities {
   datetime: string
   type: string
   user: {
-    profile: {
-        username: string
-        avatar: string
-    }
+    profile?:  {
+        username?: string 
+        avatar?: string 
+    } | null
   }
 }
 
