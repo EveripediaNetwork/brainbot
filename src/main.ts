@@ -58,7 +58,7 @@ async function run() {
     // await importx(dirname + "/{events,commands}/**/*.{ts,js}");
     // with ems
     await importx(
-        dirname(import.meta.url) + "/{events,commands,services}/**/*.{ts,js}"
+        dirname(import.meta.url) + "/{events,commands,services,utils}/**/*.{ts,js}"
   );
 
   // let's start the bot

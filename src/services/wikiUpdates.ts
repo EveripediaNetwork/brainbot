@@ -6,24 +6,25 @@ const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
 @singleton()
 export default class WikiUpdates {
-  prod_url: string
-  dev_url: string
+  PROD_API_URL: string
+  DEV_API_URL: string
 
   constructor() {
-    this.prod_url = process.env.PROD_API_URL || ''
-    this.dev_url = process.env.DEV_API_URL || ''
+    this.PROD_API_URL = process.env.PROD_API_URL
+    this.DEV_API_URL = process.env.DEV_API_URL
   }
 
   getUnixtime(time: string): number {
     return Math.floor(new Date(time).getTime() / 1000)
   }
 
-  async setTime(value: number | undefined) {
-    myCache.set('newUnix', value, 100)
+  async setTime(value: number | undefined, channelType: ChannelTypes) {
+    myCache.set(`newUnix-${channelType}`, value, 100)
   }
 
-  async getTime(): Promise<number> {
-    const cachedTime: number = (await myCache.get('newUnix')) || 0
+  async getTime(channelType: ChannelTypes): Promise<number> {
+    const cachedTime: number =
+      (await myCache.get(`newUnix-${channelType}`)) || 0
     return cachedTime ? cachedTime : Date.now()
   }
 
@@ -35,6 +36,13 @@ export default class WikiUpdates {
           wikiId
           type
           datetime
+          user {
+            id
+            profile {
+              username
+              avatar
+            }
+          }
         }
       }
     `
@@ -42,21 +50,22 @@ export default class WikiUpdates {
     let result
 
     if (channelType === ChannelTypes.DEV) {
-      result = await request(this.dev_url, query)
+          result = await request(this.DEV_API_URL, query)
+      newUnixTime = this.getUnixtime(result.activities[0].datetime)
+      console.log(newUnixTime)
+      await this.setTime(newUnixTime, ChannelTypes.DEV)
     }
 
     if (channelType === ChannelTypes.PROD) {
-      result = await request(this.prod_url, query)
+      result = await request(this.PROD_API_URL, query)
+      newUnixTime = this.getUnixtime(result.activities[0].datetime)
+      console.log(newUnixTime)
+      await this.setTime(newUnixTime, ChannelTypes.PROD)
     }
-
-    newUnixTime = this.getUnixtime(result.activities[0].datetime)
-    console.log(newUnixTime)
-    await this.setTime(newUnixTime)
 
     result = result.activities.filter((wiki: wikiActivities) => {
       return this.getUnixtime(wiki.datetime) > time
     })
-
 
     return result
   }
