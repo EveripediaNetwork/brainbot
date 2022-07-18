@@ -44,7 +44,7 @@ export class AppDiscord {
       channelIds.PROD,
     ) as TextChannel
 
-    schedule.scheduleJob('* * * *', async () => {
+    schedule.scheduleJob('*/6 * * * * *', async () => {
       console.log('Calling for new wikis 🚀')
 
       await this.updates.sendUpdates(devChannel, ChannelTypes.DEV, this.DEV_URL)
