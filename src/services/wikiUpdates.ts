@@ -61,23 +61,22 @@ export default class WikiUpdates {
 
     if (channelType === ChannelTypes.DEV) {
       result = await request(this.DEV_API_URL, query)
-      console.log(channelType)
       newUnixTime = this.getUnixtime(result.activities[0].datetime)
-      console.log(newUnixTime)
+      console.log(`${channelType} time`, newUnixTime)
       await this.setTime(newUnixTime, ChannelTypes.DEV)
     }
 
     if (channelType === ChannelTypes.PROD) {
       result = await request(this.PROD_API_URL, query)
       newUnixTime = this.getUnixtime(result.activities[0].datetime)
-      console.log(newUnixTime)
+      console.log(`${channelType} time`, newUnixTime)
       await this.setTime(newUnixTime, ChannelTypes.PROD)
     }
 
     result = result.activities.filter((wiki: wikiActivities) => {
       return this.getUnixtime(wiki.datetime) > time
     })
-    console.log(JSON.parse(JSON.stringify(result)))
+    
     return result
   }
 }
