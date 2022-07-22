@@ -52,5 +52,7 @@ export class AppDiscord {
       await this.updates.sendUpdates(prodChannel, ChannelTypes.PROD, this.PROD_URL)
 
     })
+
+    // #TODO: check every one hr for hiiqAlarm
   }
 }
