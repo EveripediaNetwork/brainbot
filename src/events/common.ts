@@ -6,6 +6,7 @@ import { injectable } from 'tsyringe'
 import schedule from 'node-schedule'
 import Updates from '../utils/sendUpdates.js'
 import { ChannelTypes } from '../services/types/activityResult.js'
+import HiiqAlarm from '../services/hiiqAlarm.js'
 
 @Discord()
 @injectable()
@@ -13,7 +14,7 @@ export class AppDiscord {
   PROD_URL: string
   DEV_URL: string
 
-  constructor(private updates: Updates) {
+  constructor(private updates: Updates, private hiiqAlarm: HiiqAlarm) {
     this.PROD_URL = process.env.PROD_URL
     this.DEV_URL = process.env.DEV_URL
   }
@@ -44,15 +45,21 @@ export class AppDiscord {
       channelIds.PROD,
     ) as TextChannel
 
-    schedule.scheduleJob('* * * *', async () => {
-      console.log('Calling for new wikis 🚀')
+    // schedule.scheduleJob('* * * *', async () => {
+    //   console.log('Calling for new wikis 🚀')
 
-      await this.updates.sendUpdates(devChannel, ChannelTypes.DEV, this.DEV_URL)
+    //   await this.updates.sendUpdates(devChannel, ChannelTypes.DEV, this.DEV_URL)
 
-      await this.updates.sendUpdates(prodChannel, ChannelTypes.PROD, this.PROD_URL)
+    //   await this.updates.sendUpdates(prodChannel, ChannelTypes.PROD, this.PROD_URL)
 
-    })
+    // })
 
     // #TODO: check every one hr for hiiqAlarm
+    // #FIXME: Set back time to 1hr interval
+    schedule.scheduleJob('*/60 * * * * *', async () => {
+        devChannel.send('helo')
+        await this.hiiqAlarm.getData()
+    })
+
   }
 }

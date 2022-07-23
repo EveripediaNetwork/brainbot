@@ -8,5 +8,7 @@ declare namespace NodeJS {
         PROD_URL: string
         PROD_API_URL: string
         META_URL: string
+        ADDRESS: string
+        SEARCH_ADDRESS: string
     }
 }

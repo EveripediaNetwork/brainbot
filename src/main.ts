@@ -1,6 +1,6 @@
+import { Client, DIService } from "discordx";
 import "reflect-metadata";
 import { Intents, Interaction, Message } from "discord.js";
-import { Client, DIService } from "discordx";
 import { container } from 'tsyringe'
 import { dirname, importx } from "@discordx/importer";
 import 'dotenv/config'
@@ -32,7 +32,7 @@ client.once("ready", async () => {
   });
 
   // init permissions; enabled log to see changes
-  await client.initApplicationPermissions(true);
+//   await client.initApplicationPermissions(true);
 
   // uncomment this line to clear all guild commands,
   // useful when moving to global commands from guild commands
