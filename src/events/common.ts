@@ -56,7 +56,7 @@ export class AppDiscord {
 
     // #TODO: check every one hr for hiiqAlarm
     // #FIXME: Set back time to 1hr interval
-    schedule.scheduleJob('*/60 * * * * *', async () => {
+    schedule.scheduleJob('*/30 * * * * *', async () => {
         devChannel.send('helo')
         await this.hiiqAlarm.getData()
     })
