@@ -3,24 +3,35 @@ import { singleton } from 'tsyringe'
 
 @singleton()
 export default class HiiqAlarm {
-    address: string
-    search_address: string
+  address: string
+  iqAddress: string
+  search_address: string
+  etherScanApiKey: string
 
   // #TODO: Set threshold Envs.
   // #TODO: Get addresses
-  constructor(){
-    this.address =  process.env.ADDRESS 
-    this.search_address =  process.env.SEARCH_ADDRESS 
+  constructor() {
+      this.address = process.env.ADDRESS
+      this.iqAddress = process.env.IQ_ADDRESS
+      this.search_address = process.env.SEARCH_ADDRESS
+      this.etherScanApiKey = process.env.ETHERSCAN_API_KEY
   }
   // #TODO: throw alert for hiiq
   // #TODO: Check adddresses on blockchain
   async getData() {
-    const c =  this.search_address.split(',')
-    console.log(c)
-    const response = await fetch(
-      `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0x579cea1889991f68acc35ff5c3dd0621ff29b0c9&address=${this.address}&tag=latest&apikey=WPY7SVQCJEXTMXE9PBHIBPSF17XUGWFNRH`,
+    const addrs = this.search_address.split(',')
+
+    Promise.all(
+      addrs.map(async ad => {
+        const response = await fetch(
+          `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=${this.iqAddress}&address=${ad}&tag=latest&apikey=${this.etherScanApiKey}`,
+        )
+
+        const data = await response.json()
+        console.log(data)
+      }),
     )
-    const data = await response.json()
-    console.log(data)
+    console.log(addrs)
+    return addrs
   }
 }
