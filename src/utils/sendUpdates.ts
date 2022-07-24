@@ -27,25 +27,36 @@ export default class Updates {
     this.META_URL = process.env.META_URL
   }
 
-  private async messageStyle(result: wikiActivities, url: string) {
-    const content = Object.values(result.content)
+  private async messageWikiStyle(wiki: wikiActivities, url: string) {
+    const content = Object.values(wiki.content)
     const exampleEmbed = this.messageEmbed
-      .setColor(result.type === 'CREATED' ? '#00ff00' : '#e8e805')
+      .setColor(wiki.type === 'CREATED' ? '#00ff00' : '#e8e805')
       .setTitle(content[0].title)
-      .setURL(`${url}${result.wikiId}`)
+      .setURL(`${url}${wiki.wikiId}`)
       .setDescription(content[0].summary)
       .setImage(`${this.META_URL}${content[0].images[0].id}`)
       .setTimestamp()
       .setFooter({
-        text: `${result.type.toLowerCase()} by ${
-          result.user.profile?.username ? result.user.profile.username : 'user'
+        text: `${wiki.type.toLowerCase()} by ${
+          wiki.user.profile?.username ? wiki.user.profile.username : 'user'
         }  `,
         iconURL: `${this.META_URL}${
-          result.user.profile?.avatar
-            ? result.user.profile.avatar
+          wiki.user.profile?.avatar
+            ? wiki.user.profile.avatar
             : 'QmXqCRoaA61P3KamAd8UgGYyrcdb5Fu2REL6jrcVBSawwE'
         }`,
       })
+    return exampleEmbed
+  }
+  private async messageHiiqStyle(iq: HiiqResult) {
+    const address = Object.keys(iq)[0]
+    const content = Object.values(iq)[0]
+    console.log(address)
+    const exampleEmbed = this.messageEmbed
+      .setColor(content.alarm ? '#ff0000' : '#00ff00')
+      .setTitle(content.alarm ? 'Hiiq Low' : 'Hiiq High')
+      .setDescription(`value ${content.result}`)
+      .setFooter({ text: `On address ${address}` })
     return exampleEmbed
   }
 
@@ -59,19 +70,17 @@ export default class Updates {
 
       response.forEach(async (e: wikiActivities) => {
         messageUpdates.channelId.send({
-          embeds: [await this.messageStyle(e, messageUpdates.url)],
+          embeds: [await this.messageWikiStyle(e, messageUpdates.url)],
         })
       })
     }
 
     if (messageUpdates.updateType === UpdateTypes.HIIQ) {
       const response = await this.hiiqAlarm.checkHiiq()
-        // console.log(messageUpdates.channelId)
-      messageUpdates.channelId.send('here')
       response.forEach(async (e: HiiqResult) => {
-        // messageUpdates.channelId.send({
-          //     embeds: [await this.messageStyle(e, messageUpdates.url)],
-        // })
+        messageUpdates.channelId.send({
+              embeds: [await this.messageHiiqStyle(e)],
+        })
       })
     }
   }

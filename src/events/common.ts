@@ -71,15 +71,10 @@ export class AppDiscord {
     // #TODO: check every one hr for hiiqAlarm
     // #FIXME: Set back time to 1hr interval
     schedule.scheduleJob('*/10 * * * * *', async () => {
-      //    const c = await this.hiiqAlarm.getData()
-      //   devChannel.send(`${c}`)
-      //   await this.hiiqAlarm.getData()
-      //   await this.updates.sendUpdates(devChannel, ChannelTypes.DEV, this.PROD_URL, 'hiiqAlarm')
-      //   console.log(devWikiChannel)
       await this.updates.sendUpdates({
         channelId: devHiiqChannel,
         channelType: ChannelTypes.DEV,
-        url: `${this.PROD_URL}`,
+        url: '',
         updateType: UpdateTypes.HIIQ,
       })
     })

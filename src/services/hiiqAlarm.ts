@@ -11,8 +11,8 @@ interface ScanResult {
   result: string 
 }
 
-export interface HiiqResult extends Omit<ApiResult, 'result'> {
-    result: boolean
+export interface HiiqResult {
+    alarm: boolean
 }
 
 @singleton()
@@ -42,43 +42,25 @@ export class HiiqAlarm {
         return data
       }),
     )
-    // console.log(d)
     return d as unknown as [ScanResult]
   }
   // #TODO: throw alert for hiiq
   async checkHiiq(): Promise<[HiiqResult]> {
     const response = await this.getData()
 
-    // const r = [
-    //   {
-    //     '0xb55dcc69d909103b4de773412a22ab8b86e8c602': {
-    //       status: '1',
-    //       message: 'OK',
-    //       result: '39911043491676242482008923',
-    //     },
-    //   },
-    //   {
-    //     '0x6df780198e72f5919c2Da82b6Bd9fe9deB1686ba': {
-    //       status: '1',
-    //       message: 'OK',
-    //       result: '17264728425868770226931883',
-    //     },
-    //   },
-    // ]
     const result = response.map((i: ScanResult) => {
       // Below 40M
       const r = {
         [`${Object.keys(i)[0]}`]: {
           ...Object.values(i)[0],
-          r:
-            Object.values(i)[0].result.startsWith('4') &&
-            Object.values(i)[0].result.length < 26,
+          alarm:
+            !(Object.values(i)[0].result.startsWith('4') &&
+            Object.values(i)[0].result.length < 26),
         },
       }
 
       return r
     })
-    // console.log(c)
     return result as unknown as [HiiqResult]
   }
 }
