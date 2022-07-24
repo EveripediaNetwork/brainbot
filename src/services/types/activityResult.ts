@@ -23,3 +23,7 @@ export enum ChannelTypes {
   PROD = 'PROD',
 }
 
+export enum UpdateTypes {
+    WIKI = 'WIKI',
+    HIIQ = 'HIIQ'
+}
