@@ -51,7 +51,6 @@ export class AppDiscord {
 
     schedule.scheduleJob('* * * *', async () => {
       console.log('Calling for new wikis 🚀')
-      console.log('prod channels', channelIds.DEV.HIIQ)
 
       await this.updates.sendUpdates({
         channelId: devWikiChannel,
@@ -68,9 +67,7 @@ export class AppDiscord {
       })
     })
 
-    // #TODO: check every one hr for hiiqAlarm
-    // #FIXME: Set back time to 1hr interval
-    schedule.scheduleJob('*/10 * * * * *', async () => {
+    schedule.scheduleJob('* * *', async () => {
       await this.updates.sendUpdates({
         channelId: devHiiqChannel,
         channelType: ChannelTypes.DEV,

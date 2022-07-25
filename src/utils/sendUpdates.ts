@@ -7,6 +7,8 @@ import { MessageEmbed, TextChannel } from 'discord.js'
 import { singleton } from 'tsyringe'
 import WikiUpdates from '../services/wikiUpdates.js'
 import { HiiqAlarm, HiiqResult } from '../services/hiiqAlarm.js'
+import { BigNumber } from 'ethers/lib/ethers.js'
+import { formatEther } from 'ethers/lib/utils.js'
 
 interface MessageUpdates {
   channelId: TextChannel
@@ -48,14 +50,14 @@ export default class Updates {
       })
     return exampleEmbed
   }
-  private async messageHiiqStyle(iq: HiiqResult) {
+  private messageHiiqStyle(iq: HiiqResult) {
     const address = Object.keys(iq)[0]
     const content = Object.values(iq)[0]
-    console.log(address)
+    const value = BigNumber.from(content.result)
     const exampleEmbed = this.messageEmbed
-      .setColor(content.alarm ? '#ff0000' : '#00ff00')
-      .setTitle(content.alarm ? 'Hiiq Low' : 'Hiiq High')
-      .setDescription(`value ${content.result}`)
+      .setColor(content.alarm ? '#00ff00' : '#ff0000')
+      .setTitle(content.alarm ? 'Hiiq High' : 'Hiiq Low')
+      .setDescription(`value ${Number(formatEther(value)).toFixed(2)}`)
       .setFooter({ text: `On address ${address}` })
     return exampleEmbed
   }
@@ -77,9 +79,9 @@ export default class Updates {
 
     if (messageUpdates.updateType === UpdateTypes.HIIQ) {
       const response = await this.hiiqAlarm.checkHiiq()
-      response.forEach(async (e: HiiqResult) => {
+      response.forEach(  (e: HiiqResult) => {
         messageUpdates.channelId.send({
-              embeds: [await this.messageHiiqStyle(e)],
+              embeds: [this.messageHiiqStyle(e)],
         })
       })
     }
