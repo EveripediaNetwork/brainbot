@@ -18,23 +18,6 @@ export class AppDiscord {
     this.DEV_URL = process.env.DEV_URL
   }
 
-  @On('messageCreate')
-  @Guard(
-    NotBot, // You can use multiple guard functions, they are executed in the same order!
-  )
-  onMessage([message]: ArgsOf<'messageCreate'>, client: Client) {
-    switch (message.content.toLowerCase()) {
-      case 'hello':
-        message.react('🧠')
-        message.reply(`Hello`)
-        break
-      default:
-        message.reply('Awaiting new wikis ......')
-        break
-    }
-    console.log('Message Deleted', client.user?.username, message.content)
-  }
-
   @On('ready')
   async isReady([client]: ArgsOf<'ready'>) {
     const channelIds = JSON.parse(process.env.CHANNELS)
@@ -67,7 +50,8 @@ export class AppDiscord {
       })
     })
 
-    schedule.scheduleJob('*/1 * * *', async () => {
+    schedule.scheduleJob('0 */1 * * *', async () => {
+        console.log(new Date())
       await this.updates.sendUpdates({
         channelId: devHiiqChannel,
         channelType: ChannelTypes.DEV,
