@@ -23,7 +23,6 @@ export default class Updates {
 
   constructor(
     private wikiUpdates: WikiUpdates,
-    private messageEmbed: MessageEmbed,
     private hiiqAlarm: HiiqAlarm,
   ) {
     this.META_URL = process.env.META_URL
@@ -31,7 +30,7 @@ export default class Updates {
 
   private async messageWikiStyle(wiki: wikiActivities, url: string) {
     const content = Object.values(wiki.content)
-    const exampleEmbed = this.messageEmbed
+    const exampleEmbed = new MessageEmbed()
       .setColor(wiki.type === 'CREATED' ? '#00ff00' : '#e8e805')
       .setTitle(content[0].title)
       .setURL(`${url}${wiki.wikiId}`)
@@ -54,7 +53,7 @@ export default class Updates {
     const address = Object.keys(iq)[0]
     const content = Object.values(iq)[0]
     const value = BigNumber.from(content.result)
-    const exampleEmbed = this.messageEmbed
+    const exampleEmbed = new MessageEmbed()
       .setColor(content.alarm ? '#00ff00' : '#ff0000')
       .setTitle(content.alarm ? 'Hiiq High' : 'Hiiq Low')
       .setDescription(`value ${Number(formatEther(value)).toFixed(2)}`)
@@ -79,7 +78,7 @@ export default class Updates {
 
     if (messageUpdates.updateType === UpdateTypes.HIIQ) {
       const response = await this.hiiqAlarm.checkHiiq()
-      response.forEach(  (e: HiiqResult) => {
+      response.forEach((e: HiiqResult) => {
         messageUpdates.channelId.send({
               embeds: [this.messageHiiqStyle(e)],
         })
