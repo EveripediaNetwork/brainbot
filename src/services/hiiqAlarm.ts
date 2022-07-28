@@ -3,8 +3,9 @@ import { singleton } from 'tsyringe'
 import { BigNumber } from 'ethers/lib/ethers.js'
 import { formatEther } from 'ethers/lib/utils.js'
 
-interface ScanResult {
-  [key: string]: ApiResult
+export interface ScanResult {
+  address: string
+  balance: HiiqResult
 }
 
 interface ApiResult {
@@ -13,8 +14,8 @@ interface ApiResult {
   result: string
 }
 
-export interface HiiqResult {
-    alarm: boolean
+interface HiiqResult extends ApiResult {
+  alarm: boolean
 }
 
 interface AddressBody {
@@ -27,7 +28,7 @@ export class HiiqAlarm {
   iqAddress: string
   search_address: string
   etherScanApiKey: string
-  addrs: { [s: string]: AddressBody } 
+  addrs: { [s: string]: AddressBody }
 
   constructor() {
     this.iqAddress = process.env.IQ_ADDRESS
@@ -38,12 +39,12 @@ export class HiiqAlarm {
 
   private async threshold(value: string, threshold: string): Promise<boolean> {
     return (
-      formatEther(BigNumber.from(value)) >
+      formatEther(BigNumber.from(value)) <
       formatEther(BigNumber.from(threshold))
     )
   }
 
-  private async getData(): Promise<[ScanResult]> {
+  private async getData(): Promise<[ApiResult]> {
     const d = await Promise.all(
       Object.values(this.addrs).map(async (ad: any) => {
         const response = await fetch(
@@ -53,16 +54,17 @@ export class HiiqAlarm {
         return data
       }),
     )
-    return d as unknown as [ScanResult]
+    return d as unknown as [ApiResult]
   }
 
-  async checkHiiq(): Promise<[HiiqResult]> {
+  async checkHiiq(): Promise<[ScanResult]> {
     const response = await this.getData()
 
     const result = await Promise.all(
-      response.map(async (i: ScanResult, index: number) => {
+      response.map(async (i: ApiResult, index: number) => {
         const r = {
-          [`${Object.keys(i)[0]}`]: {
+          address: `${Object.keys(i)[0]}`,
+          balance: {
             ...Object.values(i)[0],
             alarm: await this.threshold(
               Object.values(i)[0].result,
@@ -73,6 +75,6 @@ export class HiiqAlarm {
         return r
       }),
     )
-    return result as unknown as [HiiqResult]
+    return result as unknown as [ScanResult]
   }
 }
