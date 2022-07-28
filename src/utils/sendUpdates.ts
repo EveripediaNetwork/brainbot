@@ -50,13 +50,14 @@ export default class Updates {
     let formatter = Intl.NumberFormat('en', { notation: 'compact' })
     const value = BigNumber.from(iq.balance.result)
     const hiiqEmbed = new MessageEmbed()
-      .setColor('#ff0000')
       .setAuthor({
         name: 'https://etherscan.io/address/Ox...',
         url: `https://etherscan.io/address/${iq.address}`,
       })
       .setDescription(
-        `Hiiq low, value: ${formatter.format(Number(formatEther(value)))}`,
+        `Hiiq low, value: ${formatter.format(
+          Number(formatEther(value)),
+        )}\n Threshold: ${formatter.format(Number(iq.balance.threshold))}`,
       )
       .setFooter({ text: `On address ${iq.address}` })
     return hiiqEmbed
@@ -79,7 +80,7 @@ export default class Updates {
 
     if (messageUpdates.updateType === UpdateTypes.HIIQ) {
       const response = await this.hiiqAlarm.checkHiiq()
-      response.forEach(async (e: ScanResult) => {
+      response.forEach(async (e: any) => {
         if (e.balance.alarm) {
           messageUpdates.channelId.send({
             embeds: [await this.messageHiiqStyle(e)],

@@ -50,7 +50,8 @@ export class AppDiscord {
       })
     })
 
-    schedule.scheduleJob('0 */1 * * *', async () => {
+    // schedule.scheduleJob('0 */1 * * *', async () => {
+    schedule.scheduleJob('*/10 * * * * *', async () => {
         console.log(new Date())
       await this.updates.sendUpdates({
         channelId: devHiiqChannel,

@@ -16,6 +16,7 @@ interface ApiResult {
 
 interface HiiqResult extends ApiResult {
   alarm: boolean
+  threshold: string
 }
 
 interface AddressBody {
@@ -39,8 +40,7 @@ export class HiiqAlarm {
 
   private async threshold(value: string, threshold: string): Promise<boolean> {
     return (
-      formatEther(BigNumber.from(value)) <
-      formatEther(BigNumber.from(threshold))
+      Number(formatEther(BigNumber.from(value))) < Number(threshold)
     )
   }
 
@@ -50,7 +50,7 @@ export class HiiqAlarm {
         const response = await fetch(
           `https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=${this.iqAddress}&address=${ad.address}&tag=latest&apikey=${this.etherScanApiKey}`,
         )
-        const data = { [`${ad.address}`]: await response.json() }
+        const data = { [`${ad.address}`]: await response.json()}
         return data
       }),
     )
@@ -70,6 +70,7 @@ export class HiiqAlarm {
               Object.values(i)[0].result,
               Object.values(this.addrs)[index].threshold,
             ),
+            threshold: Object.values(this.addrs)[index].threshold,
           },
         }
         return r
