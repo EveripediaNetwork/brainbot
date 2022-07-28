@@ -6,7 +6,7 @@ import {
 import { MessageEmbed, TextChannel } from 'discord.js'
 import { singleton } from 'tsyringe'
 import WikiUpdates from '../services/wikiUpdates.js'
-import { HiiqAlarm, HiiqResult } from '../services/hiiqAlarm.js'
+import { HiiqAlarm, ScanResult } from '../services/hiiqAlarm.js'
 import { BigNumber } from 'ethers/lib/ethers.js'
 import { formatEther } from 'ethers/lib/utils.js'
 
@@ -21,16 +21,13 @@ interface MessageUpdates {
 export default class Updates {
   META_URL: string
 
-  constructor(
-    private wikiUpdates: WikiUpdates,
-    private hiiqAlarm: HiiqAlarm,
-  ) {
+  constructor(private wikiUpdates: WikiUpdates, private hiiqAlarm: HiiqAlarm) {
     this.META_URL = process.env.META_URL
   }
 
   private async messageWikiStyle(wiki: wikiActivities, url: string) {
     const content = Object.values(wiki.content)
-    const exampleEmbed = new MessageEmbed()
+    const wikiEmbed = new MessageEmbed()
       .setColor(wiki.type === 'CREATED' ? '#00ff00' : '#e8e805')
       .setTitle(content[0].title)
       .setURL(`${url}${wiki.wikiId}`)
@@ -47,18 +44,22 @@ export default class Updates {
             : 'QmXqCRoaA61P3KamAd8UgGYyrcdb5Fu2REL6jrcVBSawwE'
         }`,
       })
-    return exampleEmbed
+    return wikiEmbed
   }
-  private messageHiiqStyle(iq: HiiqResult) {
-    const address = Object.keys(iq)[0]
-    const content = Object.values(iq)[0]
-    const value = BigNumber.from(content.result)
-    const exampleEmbed = new MessageEmbed()
-      .setColor(content.alarm ? '#00ff00' : '#ff0000')
-      .setTitle(content.alarm ? 'Hiiq High' : 'Hiiq Low')
-      .setDescription(`value ${Number(formatEther(value)).toFixed(2)}`)
-      .setFooter({ text: `On address ${address}` })
-    return exampleEmbed
+  private async messageHiiqStyle(iq: ScanResult) {
+    let formatter = Intl.NumberFormat('en', { notation: 'compact' })
+    const value = BigNumber.from(iq.balance.result)
+    const hiiqEmbed = new MessageEmbed()
+      .setColor('#ff0000')
+      .setAuthor({
+        name: 'https://etherscan.io/address/Ox...',
+        url: `https://etherscan.io/address/${iq.address}`,
+      })
+      .setDescription(
+        `Hiiq low, value: ${formatter.format(Number(formatEther(value)))}`,
+      )
+      .setFooter({ text: `On address ${iq.address}` })
+    return hiiqEmbed
   }
 
   async sendUpdates(messageUpdates: MessageUpdates) {
@@ -78,10 +79,12 @@ export default class Updates {
 
     if (messageUpdates.updateType === UpdateTypes.HIIQ) {
       const response = await this.hiiqAlarm.checkHiiq()
-      response.forEach((e: HiiqResult) => {
-        messageUpdates.channelId.send({
-              embeds: [this.messageHiiqStyle(e)],
-        })
+      response.forEach(async (e: ScanResult) => {
+        if (e.balance.alarm) {
+          messageUpdates.channelId.send({
+            embeds: [await this.messageHiiqStyle(e)],
+          })
+        }
       })
     }
   }
