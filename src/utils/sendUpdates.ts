@@ -50,6 +50,7 @@ export default class Updates {
     let formatter = Intl.NumberFormat('en', { notation: 'compact' })
     const value = BigNumber.from(iq.balance.result)
     const hiiqEmbed = new MessageEmbed()
+      .setColor('#ff0000')
       .setAuthor({
         name: 'https://etherscan.io/address/Ox...',
         url: `https://etherscan.io/address/${iq.address}`,
@@ -80,7 +81,7 @@ export default class Updates {
 
     if (messageUpdates.updateType === UpdateTypes.HIIQ) {
       const response = await this.hiiqAlarm.checkHiiq()
-      response.forEach(async (e: any) => {
+      response.forEach(async (e: ScanResult) => {
         if (e.balance.alarm) {
           messageUpdates.channelId.send({
             embeds: [await this.messageHiiqStyle(e)],
