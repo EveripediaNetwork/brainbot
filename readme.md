@@ -1,7 +1,5 @@
 <h1 align="center">
   <br>
-  <a href="https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop"><img src="https://ipfs.everipedia.org/ipfs/QmeYq5z5431h5Vdh6xgHns1Lu9V73PSsitNfnwyJUEAJ8G" alt="BrainDAO" width="35%" height="35%"></a>
-  <br>
   Everipedia Brain Bot
   <br>
 </h1>
@@ -70,5 +68,3 @@ export BOT_TOKEN=REPLACE_THIS_WITH_YOUR_BOT_TOKEN
 ```bash
 npm run serve
 ```
-
-Join us on our [Official Discord Server](https://discord.gg/MmysbVj9)!
