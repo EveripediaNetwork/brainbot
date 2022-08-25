@@ -56,7 +56,7 @@ export default class Updates {
         url: `https://etherscan.io/address/${iq.address}`,
       })
       .setDescription(
-        `Hiiq low, value: ${formatter.format(
+        `🛑 IQ low, value: ${formatter.format(
           Number(formatEther(value)),
         )}\n Threshold: ${formatter.format(Number(iq.balance.threshold))}`,
       )
