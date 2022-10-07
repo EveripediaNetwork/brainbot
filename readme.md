@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  Everipedia Brain Bot
+  IQ.wiki Brain Bot
   <br>
 </h1>
 
