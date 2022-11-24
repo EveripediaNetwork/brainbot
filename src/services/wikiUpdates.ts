@@ -36,6 +36,7 @@ export default class WikiUpdates {
     const query = gql`
       {
         activities(lang: "en") {
+          id
           wikiId
           type
           datetime
@@ -44,13 +45,23 @@ export default class WikiUpdates {
             profile {
               username
               avatar
+              links {
+                twitter
+              }
             }
           }
           content {
             title
             summary
+            categories {
+              title
+            }
             images {
               id
+            }
+            metadata {
+              id
+              value
             }
           }
         }
@@ -76,7 +87,7 @@ export default class WikiUpdates {
     result = result.activities.filter((wiki: wikiActivities) => {
       return this.getUnixtime(wiki.datetime) > time
     })
-    
+
     return result
   }
 }

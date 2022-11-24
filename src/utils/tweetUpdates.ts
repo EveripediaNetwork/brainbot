@@ -1,26 +1,63 @@
-import { Client, auth } from 'twitter-api-sdk'
 import { wikiActivities } from '../services/types/activityResult'
+import { TwitterApi } from 'twitter-api-v2'
 
 export default class WikiUpdatesTweeter {
-  private client: Client
+  private client: TwitterApi
 
   constructor() {
-    this.client = new Client(
-      new auth.OAuth2User({
-        client_id: process.env.CLIENT_ID as string,
-        client_secret: process.env.CLIENT_SECRET as string,
-        callback: process.env.TWITTER_CALLBACK_URL as string,
-        scopes: ['tweet.write'],
-      }),
-    )
+    this.client = new TwitterApi({
+      appKey: process.env.TWITTER_API_KEY as string,
+      appSecret: process.env.TWITTER_API_SECRET as string,
+      accessToken: process.env.TWITTER_ACCESS_TOKEN as string,
+      accessSecret: process.env.TWITTER_ACCESS_SECRET as string,
+    })
   }
 
   async tweetWikiActivity(activity: wikiActivities, url: string) {
-    const text = `New wiki activity: ${activity.content[0].title} by ${
-      activity.user.profile?.username || activity.user.id
-    } ${url}${activity.wikiId}`
+    // TWEET ELEMENTS
+    const wikiTitle = activity.content[0].title
+    const editorName = activity.user.profile?.username || activity.user.id
+
+    const wikiRelatedTwitterAccount = `(@${
+      activity.content[0].metadata.find(m => m.id === 'twitter_profile')?.value
+    }) `
+      .replace('https://twitter.com/', '')
+      .replace('(@)', '')
+    const editorTwitterAccount = `@${
+      activity.user.profile?.links?.find(l => l.twitter)?.twitter
+    }`.replace('https://twitter.com/', '')
+
+    const wikiURL = `${url.replace('/wiki', '/revision')}${activity.id}`
+    const hashTags = [
+      '#Wiki',
+      ...activity.content[0].categories.map(c =>
+        `#${c.title}`
+          .split(' ')
+          .map(w => w[0].toUpperCase() + w.substring(1))
+          .join(''),
+      ),
+    ]
+
+    // BUILDING TWEET TEXT WITH FORMATTING
+    const text = [
+      '✨ New wiki activity on',
+      wikiTitle,
+      wikiRelatedTwitterAccount,
+      'by',
+      editorTwitterAccount.length > 3 ? editorTwitterAccount : editorName,
+      '\n\n',
+      ...hashTags,
+      '\n\n',
+      wikiURL,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    // TWEETING THE ACTIVITY
     try {
-      await this.client.tweets.createTweet({ text })
+      const rwClient = this.client.readWrite
+      const result = await rwClient.v2.tweet(text)
+      console.log(result)
     } catch (e) {
       console.log(`🚨 ERROR SENDING ACTIVITY TWEET: `, e)
     }
