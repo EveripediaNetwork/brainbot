@@ -39,7 +39,8 @@
     "node-fetch": "^3.2.9",
     "node-schedule": "^2.1.0",
     "reflect-metadata": "^0.1.13",
-    "tsyringe": "^4.6.0"
+    "tsyringe": "^4.6.0",
+    "twitter-api-sdk": "^1.2.1"
   },
   "devDependencies": {
     "@discordx/changelog": "^2.0.7",

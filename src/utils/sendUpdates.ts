@@ -9,6 +9,7 @@ import WikiUpdates from '../services/wikiUpdates.js'
 import { HiiqAlarm, ScanResult } from '../services/hiiqAlarm.js'
 import { BigNumber } from 'ethers/lib/ethers.js'
 import { formatEther } from 'ethers/lib/utils.js'
+import WikiUpdatesTweeter from './tweetUpdates.js'
 
 interface MessageUpdates {
   channelId: TextChannel
@@ -21,7 +22,11 @@ interface MessageUpdates {
 export default class Updates {
   META_URL: string
 
-  constructor(private wikiUpdates: WikiUpdates, private hiiqAlarm: HiiqAlarm) {
+  constructor(
+    private wikiUpdates: WikiUpdates,
+    private hiiqAlarm: HiiqAlarm,
+    private twitter: WikiUpdatesTweeter,
+  ) {
     this.META_URL = process.env.META_URL
   }
 
@@ -71,11 +76,11 @@ export default class Updates {
         time,
         messageUpdates.channelType,
       )
-
       response.forEach(async (e: wikiActivities) => {
         messageUpdates.channelId.send({
           embeds: [await this.messageWikiStyle(e, messageUpdates.url)],
         })
+        this.twitter.tweetWikiActivity(e, messageUpdates.url)
       })
     }
 
