@@ -1,5 +1,6 @@
 import { wikiActivities } from '../services/types/activityResult'
 import { TwitterApi } from 'twitter-api-v2'
+import shortenAddress from './shortenAddress'
 
 export default class WikiUpdatesTweeter {
   private client: TwitterApi
@@ -16,8 +17,10 @@ export default class WikiUpdatesTweeter {
   async tweetWikiActivity(activity: wikiActivities, url: string) {
     // TWEET ELEMENTS
     const wikiTitle = activity.content[0].title
-    const editorName = activity.user.profile?.username || activity.user.id
-
+    let editorName = activity.user.profile?.username || activity.user.id
+    if (editorName.startsWith('0x')) {
+      editorName = shortenAddress(editorName)
+    }
     const wikiRelatedTwitterAccount = `(@${
       activity.content[0].metadata.find(m => m.id === 'twitter_profile')?.value
     }) `
