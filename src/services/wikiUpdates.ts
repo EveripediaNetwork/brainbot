@@ -56,6 +56,9 @@ export default class WikiUpdates {
             categories {
               title
             }
+            tags {
+              id
+            }
             images {
               id
             }

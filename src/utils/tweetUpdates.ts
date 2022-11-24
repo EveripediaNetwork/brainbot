@@ -33,28 +33,34 @@ export default class WikiUpdatesTweeter {
     const wikiURL = `${url.replace('/wiki', '/revision')}${activity.id}`
     const hashTags = [
       '#Wiki',
-      ...activity.content[0].categories.map(c =>
-        `#${c.title}`
-          .split(' ')
-          .map(w => w[0].toUpperCase() + w.substring(1))
-          .join(''),
-      ),
-    ]
+      ...activity.content[0].categories.map(c => c.title),
+      ...activity.content[0].tags.map(t => t.id),
+    ].map(tag =>
+      `#${tag}`
+        .split(' ')
+        .map(w => w[0].toUpperCase() + w.substring(1))
+        .join(''),
+    )
 
     // BUILDING TWEET TEXT WITH FORMATTING
-    const text = [
-      '✨ New wiki activity on',
-      wikiTitle,
-      wikiRelatedTwitterAccount,
-      'by',
-      editorTwitterAccount.length > 3 ? editorTwitterAccount : editorName,
-      '\n\n',
-      ...hashTags,
-      '\n\n',
-      wikiURL,
-    ]
-      .filter(Boolean)
-      .join(' ')
+    // - Check if the tweet is too long. If it is, remove the last hashtag and try again
+    let text = ''
+    let hashtagRemovedCount = 0
+    do {
+      text = [
+        '✨ New wiki activity on',
+        wikiTitle,
+        wikiRelatedTwitterAccount,
+        'by',
+        editorTwitterAccount.length > 3 ? editorTwitterAccount : editorName,
+        '\n\n',
+        ...hashTags.slice(0, hashTags.length - hashtagRemovedCount),
+        '\n\n',
+        wikiURL,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    } while (text.length > 280)
 
     // TWEETING THE ACTIVITY
     try {

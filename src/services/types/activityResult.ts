@@ -10,6 +10,7 @@ export interface wikiActivities {
       title: string
       metadata: [{ id: string; value: string }]
       categories: [{ title: string }]
+      tags: [{ id: string }]
     },
   ]
   user: {
