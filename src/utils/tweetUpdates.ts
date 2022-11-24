@@ -36,10 +36,9 @@ export default class WikiUpdatesTweeter {
     const editorTwitterAccount = `@${
       activity.user.profile?.links?.find(l => l.twitter)?.twitter
     }`.replace('https://twitter.com/', '')
-
     const wikiURL = `${url.replace('/wiki', '/revision')}${activity.id}`
     const hashTags = [
-      '#Wiki',
+      'Wiki',
       ...activity.content[0].categories.map(c => c.title),
       ...activity.content[0].tags.map(t => t.id),
     ].map(tag =>
@@ -53,7 +52,15 @@ export default class WikiUpdatesTweeter {
     // - Check if the tweet is too long. If it is, remove the last hashtag and try again
     let text = ''
     let hashtagRemovedCount = 0
+    const originalHashTagLength = hashTags.length
+
     do {
+      if (hashtagRemovedCount === originalHashTagLength - 1) {
+        console.error(
+          '🚨 ERROR FORMING TWEET: Too many hashtags removed, skipping',
+        )
+        return
+      }
       text = [
         '✨ New wiki activity on',
         wikiTitle,
@@ -67,6 +74,7 @@ export default class WikiUpdatesTweeter {
       ]
         .filter(Boolean)
         .join(' ')
+      hashtagRemovedCount++
     } while (text.length > 280)
 
     // TWEETING THE ACTIVITY
@@ -75,7 +83,7 @@ export default class WikiUpdatesTweeter {
       const result = await rwClient.v2.tweet(text)
       console.log(result)
     } catch (e) {
-      console.log(`🚨 ERROR SENDING ACTIVITY TWEET: `, e)
+      console.error(`🚨 ERROR SENDING TWEET: `, e)
     }
   }
 }

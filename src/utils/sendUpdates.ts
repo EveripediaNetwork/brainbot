@@ -81,7 +81,7 @@ export default class Updates {
           embeds: [await this.messageWikiStyle(e, messageUpdates.url)],
         })
         if (messageUpdates.channelType === ChannelTypes.PROD) {
-          this.twitter.tweetWikiActivity(e, messageUpdates.url)
+          await this.twitter.tweetWikiActivity(e, messageUpdates.url)
         }
       })
     }
