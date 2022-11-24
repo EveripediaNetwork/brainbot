@@ -1,6 +1,13 @@
 import { wikiActivities } from '../services/types/activityResult'
 import { TwitterApi } from 'twitter-api-v2'
-import shortenAddress from './shortenAddress'
+
+export const shortenAddress = (address: string) => {
+  const match = address.match(
+    /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/,
+  )
+  if (!match) return address
+  return `${match[1]}…${match[2]}`
+}
 
 export default class WikiUpdatesTweeter {
   private client: TwitterApi
