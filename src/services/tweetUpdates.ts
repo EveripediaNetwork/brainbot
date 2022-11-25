@@ -1,12 +1,14 @@
-import { wikiActivities } from '../services/types/activityResult'
+import { wikiActivities } from './types/activityResult'
 import { TwitterApi } from 'twitter-api-v2'
 import {
   convertToCamelCase,
   getTwitterMention,
   makeTextFromWords,
   shortenAddress,
-} from './textUtilities.js'
+} from '../utils/textUtilities.js'
+import { singleton } from 'tsyringe'
 
+@singleton()
 export default class WikiUpdatesTweeter {
   private client: TwitterApi
   private TWEET_LIMIT = 280

@@ -9,7 +9,7 @@ import WikiUpdates from '../services/wikiUpdates.js'
 import { HiiqAlarm, ScanResult } from '../services/hiiqAlarm.js'
 import { BigNumber } from 'ethers/lib/ethers.js'
 import { formatEther } from 'ethers/lib/utils.js'
-import WikiUpdatesTweeter from './tweetUpdates.js'
+import WikiUpdatesTweeter from '../services/tweetUpdates.js'
 
 interface MessageUpdates {
   channelId: TextChannel
@@ -80,7 +80,7 @@ export default class Updates {
         messageUpdates.channelId.send({
           embeds: [await this.messageWikiStyle(e, messageUpdates.url)],
         })
-        if (messageUpdates.channelType === ChannelTypes.PROD) {
+        if (messageUpdates.channelType === ChannelTypes.DEV) {
           await this.twitter.tweetWikiActivity(e, messageUpdates.url)
         }
       })
