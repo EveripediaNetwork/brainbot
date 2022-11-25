@@ -1,16 +1,14 @@
 import { wikiActivities } from '../services/types/activityResult'
 import { TwitterApi } from 'twitter-api-v2'
-
-export const shortenAddress = (address: string) => {
-  const match = address.match(
-    /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/,
-  )
-  if (!match) return address
-  return `${match[1]}…${match[2]}`
-}
+import {
+  convertToCamelCase,
+  makeTextFromWords,
+  shortenAddress,
+} from './textUtilities.js'
 
 export default class WikiUpdatesTweeter {
   private client: TwitterApi
+  private TWEET_LIMIT = 280
 
   constructor() {
     this.client = new TwitterApi({
@@ -22,68 +20,70 @@ export default class WikiUpdatesTweeter {
   }
 
   async tweetWikiActivity(activity: wikiActivities, url: string) {
-    // TWEET ELEMENTS
-    const wikiTitle = activity.content[0].title
-    let editorName = activity.user.profile?.username || activity.user.id
-    if (editorName.startsWith('0x')) {
-      editorName = shortenAddress(editorName)
+    try {
+      const tweet = this.buildTweet(activity, url)
+      const response = await this.client.readWrite.v2.tweet(tweet)
+      console.log(`✨ TWEET SENT ! :`, response)
+    } catch (e) {
+      console.error(`🚨 ERROR SENDING TWEET: `, e)
     }
-    const wikiRelatedTwitterAccount = `(@${
-      activity.content[0].metadata.find(m => m.id === 'twitter_profile')?.value
-    }) `
-      .replace('https://twitter.com/', '')
-      .replace('(@)', '')
-    const editorTwitterAccount = `@${
-      activity.user.profile?.links?.find(l => l.twitter)?.twitter
-    }`.replace('https://twitter.com/', '')
+  }
+
+  private buildTweet(activity: wikiActivities, url: string) {
+    const wikiTitle = activity.content[0].title
+    const editorName = this.getEditorName(activity)
+    const wikiRelatedTwitterAccount = this.getWikiTwitterAccount(activity)
     const wikiURL = `${url.replace('/wiki', '/revision')}${activity.id}`
-    const hashTags = [
-      'Wiki',
-      ...activity.content[0].categories.map(c => c.title),
-      ...activity.content[0].tags.map(t => t.id),
-    ].map(tag =>
-      `#${tag}`
-        .split(' ')
-        .map(w => w[0].toUpperCase() + w.substring(1))
-        .join(''),
-    )
+    const hashTags = this.getHashTags(activity)
 
-    // BUILDING TWEET TEXT WITH FORMATTING
-    // - Check if the tweet is too long. If it is, remove the last hashtag and try again
     let text = ''
-    let hashtagRemovedCount = 0
-    const originalHashTagLength = hashTags.length
-
     do {
-      if (hashtagRemovedCount === originalHashTagLength - 1) {
-        console.error(
-          '🚨 ERROR FORMING TWEET: Too many hashtags removed, skipping',
-        )
-        return
+      if (hashTags.length === 0) {
+        throw new Error('No hashtags found')
       }
-      text = [
+      text = makeTextFromWords([
         '✨ New wiki activity on',
         wikiTitle,
         wikiRelatedTwitterAccount,
         'by',
-        editorTwitterAccount.length > 3 ? editorTwitterAccount : editorName,
+        editorName,
         '\n\n',
-        ...hashTags.slice(0, hashTags.length - hashtagRemovedCount),
+        ...hashTags,
         '\n\n',
         wikiURL,
-      ]
-        .filter(Boolean)
-        .join(' ')
-      hashtagRemovedCount++
-    } while (text.length > 280)
+      ])
+      hashTags.pop()
+    } while (text.length > this.TWEET_LIMIT)
 
-    // TWEETING THE ACTIVITY
-    try {
-      const rwClient = this.client.readWrite
-      const result = await rwClient.v2.tweet(text)
-      console.log(result)
-    } catch (e) {
-      console.error(`🚨 ERROR SENDING TWEET: `, e)
+    return text
+  }
+
+  private getEditorName(activity: wikiActivities) {
+    const twitterUsername = `@${
+      activity.user.profile?.links?.find(l => l.twitter)?.twitter
+    }`.replace('https://twitter.com/', '')
+    if (twitterUsername.length > 3) return twitterUsername
+    let iqWikiUsername = activity.user.profile?.username || activity.user.id
+    if (iqWikiUsername.startsWith('0x')) {
+      iqWikiUsername = shortenAddress(iqWikiUsername)
     }
+    return iqWikiUsername
+  }
+
+  private getHashTags(activity: wikiActivities) {
+    const wikiCategories = activity.content[0].categories.map(c => c.title)
+    const wikiTags = activity.content[0].tags.map(t => t.id)
+    const tags = ['Wiki', ...wikiCategories, ...wikiTags]
+    const hashTags = tags.map(tag => convertToCamelCase(`#${tag}`))
+    return hashTags
+  }
+
+  private getWikiTwitterAccount(activity: wikiActivities) {
+    const wikiTwitterAccount = activity.content[0].metadata.find(
+      m => m.id === 'twitter_profile',
+    )?.value
+    return `(@${wikiTwitterAccount})`
+      .replace('https://twitter.com/', '')
+      .replace('(@)', '')
   }
 }
