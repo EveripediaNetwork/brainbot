@@ -25,8 +25,8 @@ export const getTwitterMention = (twitterAccount?: string) => {
   let account = twitterAccount.replace('https://twitter.com/', '')
   if (
     account &&
-    account.length > TWITTER_USERNAME_MIN_LENGTH &&
-    account.length < TWITTER_USERNAME_MAX_LENGTH
+    account.length >= TWITTER_USERNAME_MIN_LENGTH &&
+    account.length <= TWITTER_USERNAME_MAX_LENGTH
   )
     return `@${account}`
   else return null
