@@ -83,9 +83,9 @@ export default class WikiUpdatesTweeter {
   }
 
   private getWikiTwitterAccount(activity: wikiActivities) {
-    const wikiTwitterAccount = activity.content[0].metadata
-      .find(m => m.id === 'twitter_profile')
-      ?.value.replace('https://twitter.com/', '')
+    const wikiTwitterAccount = activity.content[0].metadata.find(
+      m => m.id === 'twitter_profile',
+    )?.value
     const wikiTwitterMention = getTwitterMention(wikiTwitterAccount)
     if (wikiTwitterMention) return `(${wikiTwitterMention})`
     return null
