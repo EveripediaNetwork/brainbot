@@ -1,4 +1,5 @@
 export interface wikiActivities {
+  id: string
   wikiId: string
   datetime: string
   type: string
@@ -7,6 +8,9 @@ export interface wikiActivities {
       summary: string
       images: [{ id: string }]
       title: string
+      metadata: [{ id: string; value: string }]
+      categories: [{ title: string }]
+      tags: [{ id: string }]
     },
   ]
   user: {
@@ -14,6 +18,11 @@ export interface wikiActivities {
     profile?: {
       username?: string
       avatar?: string
+      links?: [
+        {
+          twitter?: string
+        },
+      ]
     } | null
   }
 }
@@ -24,6 +33,6 @@ export enum ChannelTypes {
 }
 
 export enum UpdateTypes {
-    WIKI = 'WIKI',
-    HIIQ = 'HIIQ'
+  WIKI = 'WIKI',
+  HIIQ = 'HIIQ',
 }
