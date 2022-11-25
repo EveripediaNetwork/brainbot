@@ -2,6 +2,7 @@ import { wikiActivities } from '../services/types/activityResult'
 import { TwitterApi } from 'twitter-api-v2'
 import {
   convertToCamelCase,
+  getTwitterMention,
   makeTextFromWords,
   shortenAddress,
 } from './textUtilities.js'
@@ -37,6 +38,7 @@ export default class WikiUpdatesTweeter {
     const hashTags = this.getHashTags(activity)
 
     let text = ''
+
     do {
       if (hashTags.length === 0) {
         throw new Error('No hashtags found')
@@ -59,14 +61,16 @@ export default class WikiUpdatesTweeter {
   }
 
   private getEditorName(activity: wikiActivities) {
-    const twitterUsername = `@${
-      activity.user.profile?.links?.find(l => l.twitter)?.twitter
-    }`.replace('https://twitter.com/', '')
-    if (twitterUsername.length > 3) return twitterUsername
+    const userTwitterUsername = activity.user.profile?.links?.find(
+      l => l.twitter,
+    )?.twitter
+    const editorTwitterMention = getTwitterMention(userTwitterUsername)
+    if (editorTwitterMention) return editorTwitterMention
+
     let iqWikiUsername = activity.user.profile?.username || activity.user.id
-    if (iqWikiUsername.startsWith('0x')) {
+    if (iqWikiUsername.startsWith('0x'))
       iqWikiUsername = shortenAddress(iqWikiUsername)
-    }
+
     return iqWikiUsername
   }
 
@@ -79,11 +83,11 @@ export default class WikiUpdatesTweeter {
   }
 
   private getWikiTwitterAccount(activity: wikiActivities) {
-    const wikiTwitterAccount = activity.content[0].metadata.find(
-      m => m.id === 'twitter_profile',
-    )?.value
-    return `(@${wikiTwitterAccount})`
-      .replace('https://twitter.com/', '')
-      .replace('(@)', '')
+    const wikiTwitterAccount = activity.content[0].metadata
+      .find(m => m.id === 'twitter_profile')
+      ?.value.replace('https://twitter.com/', '')
+    const wikiTwitterMention = getTwitterMention(wikiTwitterAccount)
+    if (wikiTwitterMention) return `(${wikiTwitterMention})`
+    return null
   }
 }
