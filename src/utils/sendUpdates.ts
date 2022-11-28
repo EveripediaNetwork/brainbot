@@ -71,25 +71,27 @@ export default class Updates {
 
   private async checkAndTweet(
     messageUpdates: MessageUpdates,
-    activity: wikiActivities,
+    wikiActivity: wikiActivities,
   ) {
-    if (messageUpdates.channelType === ChannelTypes.PROD) {
-      const twoHoursAgo = new Date().getTime() - 2 * 60 * 60 * 1000
-      let wikiIdNotTweetedRecently = false
-      const activitiesPast2hrs = await this.wikiUpdates.query(
-        twoHoursAgo,
-        messageUpdates.channelType,
+    if (messageUpdates.channelType !== ChannelTypes.PROD) return
+
+    const twoHoursAgo = Math.floor(new Date().getTime() / 1000 - 60 * 60 * 2)
+    const activitiesPast2hrs = await this.wikiUpdates.query(
+      twoHoursAgo,
+      messageUpdates.channelType,
+    )
+
+    if (
+      activitiesPast2hrs.filter(e => e.wikiId === wikiActivity.wikiId).length >
+      1
+    ) {
+      console.log(
+        `🌲 SKIPPING TWEET, ${wikiActivity.wikiId} ALREADY TWEETED IN THE LAST 2 HOURS`,
       )
-      activitiesPast2hrs.every((activity: wikiActivities) => {
-        if (activity.wikiId === activity.wikiId) {
-          wikiIdNotTweetedRecently = true
-          return false
-        }
-        if (new Date(activity.datetime).getTime() < twoHoursAgo) return true
-      })
-      if (wikiIdNotTweetedRecently)
-        await this.twitter.tweetWikiActivity(activity, messageUpdates.url)
+      return
     }
+
+    await this.twitter.tweetWikiActivity(wikiActivity, messageUpdates.url)
   }
 
   async sendUpdates(messageUpdates: MessageUpdates) {
