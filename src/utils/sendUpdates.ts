@@ -114,7 +114,7 @@ export default class Updates {
         // REVALIDATE WIKI PAGE
         await this.wikiUpdates.revalidateWikiPage(
           activity.wikiId,
-          messageUpdates.channelType,
+          messageUpdates.url,
         )
       })
     }
