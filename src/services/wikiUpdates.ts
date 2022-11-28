@@ -35,8 +35,12 @@ export default class WikiUpdates {
   async revalidateWikiPage(id: string, path: string) {
     const url = path.replace('/wiki/', '/api/')
     const revalidateUrl = `${url}/revalidate?secret=${this.REVALIDATE_SECRET}&path=/wiki/${id}`
-    const res = await axios.get(revalidateUrl)
-    console.log(`🔃 Revalidating :`, res.data)
+    try {
+      const res = await axios.get(revalidateUrl)
+      console.log('🔃 REVALIDATING :', res.data)
+    } catch (e) {
+      console.log('🚨 ERROR REVALIDATING: ', e)
+    }
   }
 
   async query(
