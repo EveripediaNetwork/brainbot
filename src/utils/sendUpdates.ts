@@ -51,6 +51,7 @@ export default class Updates {
       })
     return wikiEmbed
   }
+
   private async messageHiiqStyle(iq: ScanResult) {
     let formatter = Intl.NumberFormat('en', { notation: 'compact' })
     const value = BigNumber.from(iq.balance.result)
@@ -102,10 +103,19 @@ export default class Updates {
         messageUpdates.channelType,
       )
       response.forEach(async (activity: wikiActivities) => {
+        // SEND UPDATE ON DISCORD
         messageUpdates.channelId.send({
           embeds: [await this.messageWikiStyle(activity, messageUpdates.url)],
         })
+
+        // SEND UPDATE ON TWITTER
         await this.checkAndTweet(messageUpdates, activity)
+
+        // REVALIDATE WIKI PAGE
+        await this.wikiUpdates.revalidateWikiPage(
+          activity.wikiId,
+          messageUpdates.channelType,
+        )
       })
     }
 

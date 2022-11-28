@@ -8,10 +8,11 @@ const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 export default class WikiUpdates {
   PROD_API_URL: string
   DEV_API_URL: string
-
+  REVALIDATE_SECRET: string
   constructor() {
     this.PROD_API_URL = process.env.PROD_API_URL
     this.DEV_API_URL = process.env.DEV_API_URL
+    this.REVALIDATE_SECRET = process.env.REVALIDATE_SECRET
   }
 
   getUnixtime(time: string): number {
@@ -26,6 +27,15 @@ export default class WikiUpdates {
     const cachedTime: number =
       (await myCache.get(`newUnix-${channelType}`)) || 0
     return cachedTime ? cachedTime : Date.now()
+  }
+
+  async revalidateWikiPage(id: string, channelType: ChannelTypes) {
+    const url = (
+      channelType === ChannelTypes.PROD ? this.PROD_API_URL : this.DEV_API_URL
+    ).replace('/wiki/', '/api/')
+    const revalidateUrl = `${url}/revalidate?secret=${this.REVALIDATE_SECRET}&path=/wiki/${id}`
+    const res = fetch(revalidateUrl)
+    console.log(`Revalidating ${id} on ${channelType}...`, res)
   }
 
   async query(
