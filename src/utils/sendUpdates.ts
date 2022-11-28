@@ -69,6 +69,29 @@ export default class Updates {
     return hiiqEmbed
   }
 
+  private async checkAndTweet(
+    messageUpdates: MessageUpdates,
+    activity: wikiActivities,
+  ) {
+    if (messageUpdates.channelType === ChannelTypes.PROD) {
+      const twoHoursAgo = new Date().getTime() - 2 * 60 * 60 * 1000
+      let wikiIdNotTweetedRecently = false
+      const activitiesPast2hrs = await this.wikiUpdates.query(
+        twoHoursAgo,
+        messageUpdates.channelType,
+      )
+      activitiesPast2hrs.every((e: wikiActivities) => {
+        if (e.wikiId === activity.wikiId) {
+          wikiIdNotTweetedRecently = true
+          return false
+        }
+        if (new Date(e.datetime).getTime() < twoHoursAgo) return true
+      })
+      if (wikiIdNotTweetedRecently)
+        await this.twitter.tweetWikiActivity(activity, messageUpdates.url)
+    }
+  }
+
   async sendUpdates(messageUpdates: MessageUpdates) {
     if (messageUpdates.updateType === UpdateTypes.WIKI) {
       const time = await this.wikiUpdates.getTime(messageUpdates.channelType)
@@ -80,9 +103,7 @@ export default class Updates {
         messageUpdates.channelId.send({
           embeds: [await this.messageWikiStyle(e, messageUpdates.url)],
         })
-        if (messageUpdates.channelType === ChannelTypes.PROD) {
-          await this.twitter.tweetWikiActivity(e, messageUpdates.url)
-        }
+        await this.checkAndTweet(messageUpdates, e)
       })
     }
 
