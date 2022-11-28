@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe'
-import { request, gql, GraphQLClient } from 'graphql-request'
+import { request, gql } from 'graphql-request'
 import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
 import https from 'https'
