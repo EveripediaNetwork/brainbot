@@ -2,7 +2,6 @@ import { singleton } from 'tsyringe'
 import { request, gql } from 'graphql-request'
 import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
-import https from 'https'
 import axios from 'axios'
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
