@@ -2,16 +2,19 @@ import { singleton } from 'tsyringe'
 import { request, gql } from 'graphql-request'
 import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
+import axios from 'axios'
+
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
 @singleton()
 export default class WikiUpdates {
   PROD_API_URL: string
   DEV_API_URL: string
-
+  REVALIDATE_SECRET: string
   constructor() {
     this.PROD_API_URL = process.env.PROD_API_URL
     this.DEV_API_URL = process.env.DEV_API_URL
+    this.REVALIDATE_SECRET = process.env.REVALIDATE_SECRET
   }
 
   getUnixtime(time: string): number {
@@ -26,6 +29,17 @@ export default class WikiUpdates {
     const cachedTime: number =
       (await myCache.get(`newUnix-${channelType}`)) || 0
     return cachedTime ? cachedTime : Date.now()
+  }
+
+  async revalidateWikiPage(id: string, path: string) {
+    const url = path.replace('/wiki/', '/api/')
+    const revalidateUrl = `${url}/revalidate?secret=${this.REVALIDATE_SECRET}&path=/wiki/${id}`
+    try {
+      const res = await axios.get(revalidateUrl)
+      console.log('🔃 REVALIDATING :', res.data)
+    } catch (e) {
+      console.log('🚨 ERROR REVALIDATING: ', e)
+    }
   }
 
   async query(

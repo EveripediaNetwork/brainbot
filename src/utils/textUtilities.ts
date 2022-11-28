@@ -22,7 +22,10 @@ export const makeTextFromWords = (words: Array<string | null>) => {
 
 export const getTwitterMention = (twitterAccount?: string) => {
   if (!twitterAccount) return null
-  let account = twitterAccount.replace('https://twitter.com/', '')
+  let account = twitterAccount.trim()
+  if (twitterAccount.startsWith('https')) {
+    account = account.match(/twitter\.com\/([^/?]+)/)?.[1] || account
+  }
   if (
     account &&
     account.length >= TWITTER_USERNAME_MIN_LENGTH &&

@@ -51,6 +51,7 @@ export default class Updates {
       })
     return wikiEmbed
   }
+
   private async messageHiiqStyle(iq: ScanResult) {
     let formatter = Intl.NumberFormat('en', { notation: 'compact' })
     const value = BigNumber.from(iq.balance.result)
@@ -69,6 +70,31 @@ export default class Updates {
     return hiiqEmbed
   }
 
+  private async checkAndTweet(
+    messageUpdates: MessageUpdates,
+    wikiActivity: wikiActivities,
+  ) {
+    if (messageUpdates.channelType !== ChannelTypes.PROD) return
+
+    const twoHoursAgo = Math.floor(new Date().getTime() / 1000 - 60 * 60 * 2)
+    const activitiesPast2hrs = await this.wikiUpdates.query(
+      twoHoursAgo,
+      messageUpdates.channelType,
+    )
+
+    if (
+      activitiesPast2hrs.filter(e => e.wikiId === wikiActivity.wikiId).length >
+      1
+    ) {
+      console.log(
+        `🌲 SKIPPING TWEET, ${wikiActivity.wikiId} ALREADY TWEETED IN THE LAST 2 HOURS`,
+      )
+      return
+    }
+
+    await this.twitter.tweetWikiActivity(wikiActivity, messageUpdates.url)
+  }
+
   async sendUpdates(messageUpdates: MessageUpdates) {
     if (messageUpdates.updateType === UpdateTypes.WIKI) {
       const time = await this.wikiUpdates.getTime(messageUpdates.channelType)
@@ -76,13 +102,15 @@ export default class Updates {
         time,
         messageUpdates.channelType,
       )
-      response.forEach(async (e: wikiActivities) => {
+      response.forEach(async (activity: wikiActivities) => {
         messageUpdates.channelId.send({
-          embeds: [await this.messageWikiStyle(e, messageUpdates.url)],
+          embeds: [await this.messageWikiStyle(activity, messageUpdates.url)],
         })
-        if (messageUpdates.channelType === ChannelTypes.PROD) {
-          await this.twitter.tweetWikiActivity(e, messageUpdates.url)
-        }
+        await this.checkAndTweet(messageUpdates, activity)
+        await this.wikiUpdates.revalidateWikiPage(
+          activity.wikiId,
+          messageUpdates.url,
+        )
       })
     }
 
