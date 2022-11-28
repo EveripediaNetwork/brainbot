@@ -80,12 +80,12 @@ export default class Updates {
         twoHoursAgo,
         messageUpdates.channelType,
       )
-      activitiesPast2hrs.every((e: wikiActivities) => {
-        if (e.wikiId === activity.wikiId) {
+      activitiesPast2hrs.every((activity: wikiActivities) => {
+        if (activity.wikiId === activity.wikiId) {
           wikiIdNotTweetedRecently = true
           return false
         }
-        if (new Date(e.datetime).getTime() < twoHoursAgo) return true
+        if (new Date(activity.datetime).getTime() < twoHoursAgo) return true
       })
       if (wikiIdNotTweetedRecently)
         await this.twitter.tweetWikiActivity(activity, messageUpdates.url)
@@ -99,11 +99,11 @@ export default class Updates {
         time,
         messageUpdates.channelType,
       )
-      response.forEach(async (e: wikiActivities) => {
+      response.forEach(async (activity: wikiActivities) => {
         messageUpdates.channelId.send({
-          embeds: [await this.messageWikiStyle(e, messageUpdates.url)],
+          embeds: [await this.messageWikiStyle(activity, messageUpdates.url)],
         })
-        await this.checkAndTweet(messageUpdates, e)
+        await this.checkAndTweet(messageUpdates, activity)
       })
     }
 
