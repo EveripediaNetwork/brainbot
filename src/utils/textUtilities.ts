@@ -31,6 +31,6 @@ export const getTwitterMention = (twitterAccount?: string) => {
     account.length >= TWITTER_USERNAME_MIN_LENGTH &&
     account.length <= TWITTER_USERNAME_MAX_LENGTH
   )
-    return `@${account}`
+    return account.startsWith('@') ? account : `@${account}`
   else return null
 }
