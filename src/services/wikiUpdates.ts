@@ -1,21 +1,18 @@
 import { injectable, singleton } from 'tsyringe'
 import { request, gql } from 'graphql-request'
-import Updates from '../utils/sendUpdates.js'
 import {
   ChannelTypes,
-  UpdateTypes,
   wikiActivities,
 } from './types/activityResult.js'
 import NodeCache from 'node-cache'
 import axios from 'axios'
 import { MessageEmbed, TextChannel } from 'discord.js'
 import { client } from '../main.js'
-import { Discord } from 'discordx'
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
 const retryTime  =  30000
-const notifyTime = 20 // every 20 count interval = 10mins
+const notifyCount = 20 // every 20 count interval = 10mins
 @singleton()
 export default class WikiUpdates {
   CHANNEL_IDS: any
@@ -82,10 +79,9 @@ export default class WikiUpdates {
       channelType === ChannelTypes.PROD
         ? this.CHANNEL_IDS.PROD.WIKI
         : this.CHANNEL_IDS.DEV.WIKI
-    console.log(id)
-    const prodChannel = client.channels.cache.get(id) as TextChannel
-    if (count % 20 === 0) {
-      prodChannel.send({
+    const channel = client.channels.cache.get(id) as TextChannel
+    if (count % notifyCount === 0) {
+      channel.send({
         embeds: [await this.messageApiErrorStyle(link, errorCode)],
       })
       return true
