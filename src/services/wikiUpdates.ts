@@ -46,7 +46,6 @@ export default class WikiUpdates {
     time: number,
     channelType: ChannelTypes,
   ): Promise<[wikiActivities]> {
-    let newUnixTime
     const query = gql`
       {
         activities(lang: "en") {
@@ -88,17 +87,14 @@ export default class WikiUpdates {
     let result
 
     if (channelType === ChannelTypes.DEV) {
-      result = await request(this.DEV_API_URL, query)
-      newUnixTime = this.getUnixtime(result.activities[0].datetime)
-      console.log(`${channelType} time`, newUnixTime)
-      await this.setTime(newUnixTime, ChannelTypes.DEV)
+      return this.makeApiCall(this.DEV_API_URL, query, ChannelTypes.DEV)
     }
-
     if (channelType === ChannelTypes.PROD) {
-      result = await request(this.PROD_API_URL, query)
-      newUnixTime = this.getUnixtime(result.activities[0].datetime)
-      console.log(`${channelType} time`, newUnixTime)
-      await this.setTime(newUnixTime, ChannelTypes.PROD)
+      result = await this.makeApiCall(
+        this.PROD_API_URL,
+        query,
+        ChannelTypes.PROD,
+      )
     }
 
     result = result.activities.filter((wiki: wikiActivities) => {
@@ -106,5 +102,23 @@ export default class WikiUpdates {
     })
 
     return result
+  }
+
+  async makeApiCall(link: string, query: string, channel: ChannelTypes) {
+    try {
+      const apiCall = await request(link, query)
+      const newUnixTime = this.getUnixtime(apiCall.activities[0].datetime)
+      console.log(`${channel} time`, newUnixTime)
+      await this.setTime(newUnixTime, channel)
+      return apiCall
+    } catch (e: any) {
+      if (e) {
+        console.error(
+          `Error code ${e.code}: API Request to ${link} failed. Retrying in 30 seconds...`,
+        )
+        await new Promise(r => setTimeout(r, 30000))
+        await this.makeApiCall(link, query, channel)
+      }
+    }
   }
 }
