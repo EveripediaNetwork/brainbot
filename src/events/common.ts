@@ -1,7 +1,6 @@
-import { NotBot } from '@discordx/utilities'
 import { TextChannel } from 'discord.js'
 import type { ArgsOf } from 'discordx'
-import { Client, Discord, Guard, On } from 'discordx'
+import { Discord, On } from 'discordx'
 import { injectable } from 'tsyringe'
 import schedule from 'node-schedule'
 import Updates from '../utils/sendUpdates.js'
