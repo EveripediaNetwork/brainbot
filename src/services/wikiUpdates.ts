@@ -84,9 +84,7 @@ export default class WikiUpdates {
       channel.send({
         embeds: [await this.messageApiErrorStyle(link, errorCode)],
       })
-      return true
     }
-    return true
   }
 
   async query(
@@ -134,7 +132,7 @@ export default class WikiUpdates {
     let result
 
     if (channelType === ChannelTypes.DEV) {
-      return this.makeApiCall(this.DEV_API_URL, query, ChannelTypes.DEV)
+      result = await this.makeApiCall(this.DEV_API_URL, query, ChannelTypes.DEV)
     }
     if (channelType === ChannelTypes.PROD) {
       result = await this.makeApiCall(
@@ -143,7 +141,6 @@ export default class WikiUpdates {
         ChannelTypes.PROD,
       )
     }
-
     result = result.activities.filter((wiki: wikiActivities) => {
       return this.getUnixtime(wiki.datetime) > time
     })
