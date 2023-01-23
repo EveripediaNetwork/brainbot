@@ -18,6 +18,7 @@ interface MessageUpdates {
   updateType: UpdateTypes
 }
 
+
 @singleton()
 export default class Updates {
   META_URL: string
@@ -25,8 +26,8 @@ export default class Updates {
   constructor(
     private wikiUpdates: WikiUpdates,
     private hiiqAlarm: HiiqAlarm,
-    private twitter: WikiUpdatesTweeter,
-  ) {
+  ) // private twitter: WikiUpdatesTweeter,
+  {
     this.META_URL = process.env.META_URL
   }
 
@@ -52,6 +53,19 @@ export default class Updates {
     return wikiEmbed
   }
 
+  private async messageApiErrorStyle(url: string) {
+    const wikiEmbed = new MessageEmbed()
+      .setColor('#ff0000')
+      .setTitle(`⚠️ Request to API to ${url} failure ⚠️`)
+      .setURL(`${url}`)
+      .setTimestamp()
+      .setFooter({
+        text: 'Served by EP Bot',
+        iconURL: `🧠`,
+      })
+    return wikiEmbed
+  }
+
   private async messageHiiqStyle(iq: ScanResult) {
     let formatter = Intl.NumberFormat('en', { notation: 'compact' })
     const value = BigNumber.from(iq.balance.result)
@@ -70,30 +84,30 @@ export default class Updates {
     return hiiqEmbed
   }
 
-  private async checkAndTweet(
-    messageUpdates: MessageUpdates,
-    wikiActivity: wikiActivities,
-  ) {
-    if (messageUpdates.channelType !== ChannelTypes.PROD) return
+  //   private async checkAndTweet(
+  //     messageUpdates: MessageUpdates,
+  //     wikiActivity: wikiActivities,
+  //   ) {
+  //     if (messageUpdates.channelType !== ChannelTypes.PROD) return
 
-    const twoHoursAgo = Math.floor(new Date().getTime() / 1000 - 60 * 60 * 2)
-    const activitiesPast2hrs = await this.wikiUpdates.query(
-      twoHoursAgo,
-      messageUpdates.channelType,
-    )
+  //     const twoHoursAgo = Math.floor(new Date().getTime() / 1000 - 60 * 60 * 2)
+  //     const activitiesPast2hrs = await this.wikiUpdates.query(
+  //       twoHoursAgo,
+  //       messageUpdates.channelType,
+  //     )
 
-    if (
-      activitiesPast2hrs.filter(e => e.wikiId === wikiActivity.wikiId).length >
-      1
-    ) {
-      console.log(
-        `🌲 SKIPPING TWEET, ${wikiActivity.wikiId} ALREADY TWEETED IN THE LAST 2 HOURS`,
-      )
-      return
-    }
+  //     if (
+  //       activitiesPast2hrs.filter(e => e.wikiId === wikiActivity.wikiId).length >
+  //       1
+  //     ) {
+  //       console.log(
+  //         `🌲 SKIPPING TWEET, ${wikiActivity.wikiId} ALREADY TWEETED IN THE LAST 2 HOURS`,
+  //       )
+  //       return
+  //     }
 
-    await this.twitter.tweetWikiActivity(wikiActivity, messageUpdates.url)
-  }
+  //     await this.twitter.tweetWikiActivity(wikiActivity, messageUpdates.url)
+  //   }
 
   async sendUpdates(messageUpdates: MessageUpdates) {
     if (messageUpdates.updateType === UpdateTypes.WIKI) {
@@ -106,7 +120,7 @@ export default class Updates {
         messageUpdates.channelId.send({
           embeds: [await this.messageWikiStyle(activity, messageUpdates.url)],
         })
-        await this.checkAndTweet(messageUpdates, activity)
+        // await this.checkAndTweet(messageUpdates, activity)
         await this.wikiUpdates.revalidateWikiPage(
           activity.wikiId,
           messageUpdates.url,
@@ -123,6 +137,12 @@ export default class Updates {
           })
         }
       })
+    }
+
+    if (messageUpdates.updateType === UpdateTypes.ERROR) {
+        messageUpdates.channelId.send({
+          embeds: [await this.messageApiErrorStyle(messageUpdates.url)],
+        })
     }
   }
 }

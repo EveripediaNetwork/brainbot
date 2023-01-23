@@ -35,4 +35,5 @@ export enum ChannelTypes {
 export enum UpdateTypes {
   WIKI = 'WIKI',
   HIIQ = 'HIIQ',
+  ERROR = 'ERROR',
 }
