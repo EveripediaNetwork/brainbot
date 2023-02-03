@@ -77,7 +77,7 @@ export default class WikiUpdates {
   ) {
     const id =
       channelType === ChannelTypes.PROD
-        ? this.CHANNEL_IDS.PROD.WIKI
+        ? this.CHANNEL_IDS.PROD.ALARMS
         : this.CHANNEL_IDS.DEV.WIKI
     const channel = client.channels.cache.get(id) as TextChannel
     if (count % notifyCount === 0) {
