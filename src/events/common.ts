@@ -31,32 +31,34 @@ export class AppDiscord {
       channelIds.PROD.WIKI,
     ) as TextChannel
 
-    schedule.scheduleJob('* * * *', async () => {
-      console.log('Calling for new wikis 🚀')
+    // schedule.scheduleJob('* * * *', async () => {
+    //   console.log('Calling for new wikis 🚀')
 
-      await this.updates.sendUpdates({
-        channelId: devWikiChannel,
-        channelType: ChannelTypes.DEV,
-        url: `${this.DEV_URL}`,
-        updateType: UpdateTypes.WIKI,
-      })
+    //   await this.updates.sendUpdates({
+    //     channelId: devWikiChannel,
+    //     channelType: ChannelTypes.DEV,
+    //     url: `${this.DEV_URL}`,
+    //     updateType: UpdateTypes.WIKI,
+    //   })
 
-      await this.updates.sendUpdates({
-        channelId: prodWikiChannel,
-        channelType: ChannelTypes.PROD,
-        url: `${this.PROD_URL}`,
-        updateType: UpdateTypes.WIKI,
-      })
-    })
+    //   await this.updates.sendUpdates({
+    //     channelId: prodWikiChannel,
+    //     channelType: ChannelTypes.PROD,
+    //     url: `${this.PROD_URL}`,
+    //     updateType: UpdateTypes.WIKI,
+    //   })
+    // })
 
-    schedule.scheduleJob('0 */1 * * *', async () => {
-      console.log(new Date())
-      await this.updates.sendUpdates({
-        channelId: devHiiqChannel,
-        channelType: ChannelTypes.DEV,
-        url: '',
-        updateType: UpdateTypes.HIIQ,
-      })
-    })
+    // schedule.scheduleJob('0 */1 * * *', async () => {
+    //   console.log(new Date())
+    //   await this.updates.sendUpdates({
+    //     channelId: devHiiqChannel,
+    //     channelType: ChannelTypes.DEV,
+    //     url: '',
+    //     updateType: UpdateTypes.HIIQ,
+    //   })
+    // })
+
+    schedule.scheduleJob("*/5 * * * *", async () => { console.log('refreshing cache')})
   }
 }
