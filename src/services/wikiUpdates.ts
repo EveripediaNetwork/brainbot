@@ -45,17 +45,6 @@ export default class WikiUpdates {
     return cachedTime ? cachedTime : Date.now()
   }
 
-  async revalidateWikiPage(id: string, path: string) {
-    const url = path.replace('/wiki/', '/api/')
-    const revalidateUrl = `${url}/revalidate?secret=${this.REVALIDATE_SECRET}&path=/wiki/${id}`
-    try {
-      const res = await axios.get(revalidateUrl)
-      console.log('🔃 REVALIDATING :', res.data)
-    } catch (e) {
-      console.log('🚨 ERROR REVALIDATING: ', e)
-    }
-  }
-
   private async messageApiErrorStyle(url: string, errorCode: string) {
     const errorEmbed = new MessageEmbed()
       .setColor('#ff0000')
