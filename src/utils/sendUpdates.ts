@@ -10,6 +10,7 @@ import { HiiqAlarm, ScanResult } from '../services/hiiqAlarm.js'
 import { BigNumber } from 'ethers/lib/ethers.js'
 import { formatEther } from 'ethers/lib/utils.js'
 import WikiUpdatesTweeter from '../services/tweetUpdates.js'
+import RevalidateService from '../services/revalidate.js'
 
 interface MessageUpdates {
   channelId: TextChannel
@@ -24,6 +25,7 @@ export default class Updates {
 
   constructor(
     private wikiUpdates: WikiUpdates,
+    private revalidate: RevalidateService,
     private hiiqAlarm: HiiqAlarm,
     private twitter: WikiUpdatesTweeter,
   ) {
@@ -107,9 +109,9 @@ export default class Updates {
           embeds: [await this.messageWikiStyle(activity, messageUpdates.url)],
         })
         await this.checkAndTweet(messageUpdates, activity)
-        await this.wikiUpdates.revalidateWikiPage(
-          activity.wikiId,
+        await this.revalidate.revalidateWikiPage(
           messageUpdates.url,
+          activity.wikiId,
         )
       })
     }

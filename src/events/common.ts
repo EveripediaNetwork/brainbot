@@ -5,6 +5,8 @@ import { injectable } from 'tsyringe'
 import schedule from 'node-schedule'
 import Updates from '../utils/sendUpdates.js'
 import { ChannelTypes, UpdateTypes } from '../services/types/activityResult.js'
+import RevalidateService from '../services/revalidate.js'
+import { writeFile } from '../utils/helpers.js'
 
 @Discord()
 @injectable()
@@ -12,7 +14,7 @@ export class AppDiscord {
   PROD_URL: string
   DEV_URL: string
 
-  constructor(private updates: Updates) {
+  constructor(private updates: Updates, private revalidate: RevalidateService) {
     this.PROD_URL = process.env.PROD_URL
     this.DEV_URL = process.env.DEV_URL
   }
@@ -58,5 +60,44 @@ export class AppDiscord {
         updateType: UpdateTypes.HIIQ,
       })
     })
+
+    await this.callAndExtractWikis()
+
+    // Every 12am
+    schedule.scheduleJob('0 0 * * *', async () => {
+      await this.callAndExtractWikis()
+    })
+
+    // Every 5 minutes
+    schedule.scheduleJob('*/5 * * * *', async () => {
+      await this.revalidate.revalidateWikiPage(this.PROD_URL, '/activity')
+      await this.revalidate.revalidateWikiPage(this.PROD_URL, '/')
+
+      await this.revalidate.revalidateWikiPage(this.DEV_URL, '/activity')
+      await this.revalidate.revalidateWikiPage(this.DEV_URL, '/')
+    })
+
+    // Every minute
+    schedule.scheduleJob('* * * * *', async () => {
+      await this.revalidate.revalidateRandomWiki(
+        this.PROD_URL,
+        `${process.cwd()}/build/utils/prodWikiLinks.js`,
+      )
+      await this.revalidate.revalidateRandomWiki(
+        this.DEV_URL,
+        `${process.cwd()}/build/utils/devWikiLinks.js`,
+      )
+    })
+  }
+
+  async callAndExtractWikis(){
+    const extractedProdLinks = await this.revalidate.extractLinks(this.PROD_URL)
+    writeFile(
+      extractedProdLinks,
+      `${process.cwd()}/build/utils/prodWikiLinks.js`,
+    )
+
+    const extractedDevLinks = await this.revalidate.extractLinks(this.DEV_URL)
+    writeFile(extractedDevLinks, `${process.cwd()}/build/utils/devWikiLinks.js`)
   }
 }
