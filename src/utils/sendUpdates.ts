@@ -72,6 +72,16 @@ export default class Updates {
     return hiiqEmbed
   }
 
+  private async messageDowntimeStyle(url: string) {
+    const downtimeEmbed = new MessageEmbed()
+      .setColor('#ff0000')
+      .setTitle('🚧 Webpage Offline')
+      .setURL(url)
+      .setDescription(`${url} appears to be offline`)
+      .setTimestamp()
+    return downtimeEmbed
+  }
+
   private async checkAndTweet(
     messageUpdates: MessageUpdates,
     wikiActivity: wikiActivities,
@@ -124,6 +134,12 @@ export default class Updates {
             embeds: [await this.messageHiiqStyle(e)],
           })
         }
+      })
+    }
+
+    if (messageUpdates.updateType === UpdateTypes.DOWNTIME) {
+      messageUpdates.channelId.send({
+        embeds: [await this.messageDowntimeStyle(messageUpdates.url)],
       })
     }
   }

@@ -36,4 +36,5 @@ export enum UpdateTypes {
   WIKI = 'WIKI',
   HIIQ = 'HIIQ',
   ERROR = 'ERROR',
+  DOWNTIME = 'DOWNTIME',
 }
