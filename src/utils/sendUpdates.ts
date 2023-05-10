@@ -126,5 +126,9 @@ export default class Updates {
         }
       })
     }
+
+    if(messageUpdates.updateType === UpdateTypes.DOWNTIME) {
+        // TODO: send updates of the channels having downtime
+    }
   }
 }
