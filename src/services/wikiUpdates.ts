@@ -1,9 +1,6 @@
 import { injectable, singleton } from 'tsyringe'
 import { request, gql } from 'graphql-request'
-import {
-  ChannelTypes,
-  wikiActivities,
-} from './types/activityResult.js'
+import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
 import axios from 'axios'
 import { MessageEmbed, TextChannel } from 'discord.js'
@@ -11,7 +8,7 @@ import { client } from '../main.js'
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
-const retryTime  =  30000
+const retryTime = 30000
 const notifyCount = 20 // every 20 count interval = 10mins
 @singleton()
 export default class WikiUpdates {
@@ -45,10 +42,15 @@ export default class WikiUpdates {
     return cachedTime ? cachedTime : Date.now()
   }
 
-  private async messageApiErrorStyle(url: string, errorCode: string) {
+  private async messageApiErrorStyle(
+    url: string,
+    errorCode: string,
+    env: ChannelTypes,
+  ) {
+
     const errorEmbed = new MessageEmbed()
       .setColor('#ff0000')
-      .setTitle(`⚠️ Request to API failed ⚠️`)
+      .setTitle(`⚠️ Request to ${env} API failed ⚠️`)
       .setURL(`${url}`)
       .setDescription(`Error code: ${errorCode}`)
       .setTimestamp()
@@ -64,14 +66,13 @@ export default class WikiUpdates {
     link: string,
     errorCode: string,
   ) {
-    const id =
-      channelType === ChannelTypes.PROD
-        ? this.CHANNEL_IDS.PROD.ALARMS
-        : this.CHANNEL_IDS.DEV.WIKI
+    const id = this.CHANNEL_IDS.DEV.WIKI
     const channel = client.channels.cache.get(id) as TextChannel
     if (count % notifyCount === 0) {
       channel.send({
-        embeds: [await this.messageApiErrorStyle(link, errorCode)],
+        embeds: [
+          await this.messageApiErrorStyle(link, errorCode, channelType),
+        ],
       })
     }
   }
@@ -137,7 +138,12 @@ export default class WikiUpdates {
     return result
   }
 
-  async makeApiCall(link: string, query: string, channelType: ChannelTypes, count = 0) {
+  async makeApiCall(
+    link: string,
+    query: string,
+    channelType: ChannelTypes,
+    count = 0,
+  ) {
     try {
       const apiCall = await request(link, query)
       const newUnixTime = this.getUnixtime(apiCall.activities[0].datetime)
@@ -148,10 +154,12 @@ export default class WikiUpdates {
       if (e) {
         await this.notifyError(count, channelType, link, e.code)
         console.error(
-          `Error code ${e.code}: API Request to ${link} failed. Retrying in ${retryTime/1000} seconds...`,
+          `Error code ${e.code}: API Request to ${link} failed. Retrying in ${
+            retryTime / 1000
+          } seconds...`,
         )
         await new Promise(r => setTimeout(r, retryTime))
-        await this.makeApiCall(link, query, channelType, count+=1)
+        await this.makeApiCall(link, query, channelType, (count += 1))
       }
     }
   }
