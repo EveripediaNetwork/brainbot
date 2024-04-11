@@ -33,8 +33,17 @@ export default class RevalidateService {
   }
 
   async extractLinks(link: string) {
-    const res = await axios.get(`${this.url(link)}sitemap`)
-    const wikis = res.data.match(/\/wiki\/[^\s<]*?(?=<)/g)
+    let wikis
+    try {
+      const url = `${this.url(link)}sitemap`
+
+      const res = await axios.get(url, {
+        responseType: 'text',
+      })
+      wikis = res.data.match(/\/wiki\/[^\s<]*?(?=<)/g)
+    } catch (e: any) {
+      console.error(e.data || e.response)
+    }
     return wikis
   }
 
