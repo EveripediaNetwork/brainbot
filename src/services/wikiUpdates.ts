@@ -47,7 +47,6 @@ export default class WikiUpdates {
     errorCode: string,
     env: ChannelTypes,
   ) {
-
     const errorEmbed = new MessageEmbed()
       .setColor('#ff0000')
       .setTitle(`⚠️ Request to ${env} API failed ⚠️`)
@@ -70,9 +69,7 @@ export default class WikiUpdates {
     const channel = client.channels.cache.get(id) as TextChannel
     if (count % notifyCount === 0) {
       channel.send({
-        embeds: [
-          await this.messageApiErrorStyle(link, errorCode, channelType),
-        ],
+        embeds: [await this.messageApiErrorStyle(link, errorCode, channelType)],
       })
     }
   }
@@ -152,7 +149,9 @@ export default class WikiUpdates {
       return apiCall
     } catch (e: any) {
       if (e) {
-        await this.notifyError(count, channelType, link, e.code)
+        if (count >= 5) {
+          await this.notifyError(count, channelType, link, e.code)
+        }
         console.error(
           `Error code ${e.code}: API Request to ${link} failed. Retrying in ${
             retryTime / 1000
