@@ -27,6 +27,8 @@ jobs:
       name: List the state of node modules
       continue-on-error: true
       run: npm list
+    - name: Clear npm cache
+      run: npm cache clean --force
     - name: Installing dependencies
       run: npm ci
     - name: Build
