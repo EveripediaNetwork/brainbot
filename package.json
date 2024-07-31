@@ -21,8 +21,8 @@
   "type": "module",
   "main": "build/main.js",
   "scripts": {
-    "buildr": "turbo run build",
-    "build": "tsc",
+    "build": "rm -rf build/ && turbo run build",
+    "buildr": "tsc",
     "build:changelog": "npx @discordx/changelog --root=src",
     "dev": "node --trace-warnings --loader ts-node/esm/transpile-only src/main.ts",
     "start": "nodemon  --exec node --loader  ts-node/esm/transpile-only src/main.ts",
