@@ -21,6 +21,7 @@
   "type": "module",
   "main": "build/main.js",
   "scripts": {
+    "buildr": "turbo run build",
     "build": "tsc",
     "build:changelog": "npx @discordx/changelog --root=src",
     "dev": "node --trace-warnings --loader ts-node/esm/transpile-only src/main.ts",
@@ -33,6 +34,7 @@
     "@discordx/pagination": "^3.5.4",
     "@discordx/utilities": "^7.0.1",
     "axios": "^1.7.2",
+    "discord-api-types": "^0.37.93",
     "discord.js": "^14.15.3",
     "discordx": "^11.12.0",
     "ethers": "^5.6.9",
@@ -42,21 +44,23 @@
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
     "reflect-metadata": "^0.2.2",
+    "tslib": "^2.6.3",
     "tsyringe": "^4.8.0",
     "twitter-api-v2": "^1.17.2"
   },
   "devDependencies": {
-    "@discordx/changelog": "^2.0.7",
-    "@types/node": "^22.0.0",
+    "@types/node": "^16.18.104",
     "@types/node-schedule": "^2.1.7",
     "dotenv": "^16.4.5",
     "nodemon": "^3.1.4",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.4"
+    "turbo": "^2.0.10",
+    "typescript": "^5.4.5"
   },
+  "packageManager": "npm@10.7.0",
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": ">=20.16.0",
+    "npm": ">=10.7.0"
   }
 }

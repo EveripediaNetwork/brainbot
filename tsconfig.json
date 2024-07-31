@@ -2,14 +2,14 @@
   "compilerOptions": {
     "importHelpers": true,
     "target": "ESNext",
-    "module": "Node16",
+    "module": "NodeNext",
     "outDir": "build",
     "noImplicitAny": true,
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node16",
+    "moduleResolution": "NodeNext",
 
     /* Experimental Options */
     "experimentalDecorators": true /* Enables experimental support for ES7 decorators. */,

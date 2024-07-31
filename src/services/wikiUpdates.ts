@@ -1,4 +1,4 @@
-import { singleton } from 'tsyringe'
+import { injectable, singleton } from 'tsyringe'
 import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
 import { gql, request } from 'graphql-request'
