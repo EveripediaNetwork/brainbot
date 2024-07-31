@@ -21,8 +21,7 @@
   "type": "module",
   "main": "build/main.js",
   "scripts": {
-    "build": "rm -rf build/ && turbo run build",
-    "buildr": "tsc",
+    "build": "rimraf ./build && tsc",
     "build:changelog": "npx @discordx/changelog --root=src",
     "dev": "node --trace-warnings --loader ts-node/esm/transpile-only src/main.ts",
     "start": "nodemon  --exec node --loader  ts-node/esm/transpile-only src/main.ts",
@@ -44,6 +43,7 @@
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
     "reflect-metadata": "^0.2.2",
+    "rimraf": "^6.0.1",
     "tslib": "^2.6.3",
     "tsyringe": "^4.8.0",
     "twitter-api-v2": "^1.17.2"
@@ -55,7 +55,6 @@
     "nodemon": "^3.1.4",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
-    "turbo": "^2.0.10",
     "typescript": "^5.4.5"
   },
   "packageManager": "npm@10.7.0",
