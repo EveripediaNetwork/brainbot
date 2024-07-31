@@ -1,20 +1,20 @@
-import { Client, DIService } from "discordx";
+import { Client, DIService, tsyringeDependencyRegistryEngine } from "discordx";
 import "reflect-metadata";
-import { Intents, Interaction, Message } from "discord.js";
-import { container } from 'tsyringe'
+import { IntentsBitField, Interaction, Message } from "discord.js";
 import { dirname, importx } from "@discordx/importer";
 import 'dotenv/config'
+import { container } from 'tsyringe'
 
 export const client = new Client({
     simpleCommand: {
         prefix: "!",
     },
     intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MEMBERS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-        Intents.FLAGS.GUILD_VOICE_STATES,
+        IntentsBitField.Flags.Guilds,
+        IntentsBitField.Flags.GuildMembers,
+        IntentsBitField.Flags.GuildMessages,
+        IntentsBitField.Flags.GuildMessageReactions,
+        IntentsBitField.Flags.GuildVoiceStates,
     ],
     // If you only want to use global commands only, comment this line
     botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
@@ -26,10 +26,7 @@ client.once("ready", async () => {
     await client.guilds.fetch();
 
     // init all application commands
-    await client.initApplicationCommands({
-    guild: { log: true },
-    global: { log: true },
-  });
+    await client.initApplicationCommands();
 
   // init permissions; enabled log to see changes
 //   await client.initApplicationPermissions(true);
@@ -53,7 +50,7 @@ client.on("messageCreate", (message: Message) => {
 
 async function run() {
     
-  DIService.container = container
+  DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container)
     // with cjs
     // await importx(dirname + "/{events,commands}/**/*.{ts,js}");
     // with ems

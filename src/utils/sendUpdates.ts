@@ -3,7 +3,7 @@ import {
   ChannelTypes,
   UpdateTypes,
 } from './../services/types/activityResult.js'
-import { MessageEmbed, TextChannel } from 'discord.js'
+import { EmbedBuilder, TextChannel } from 'discord.js'
 import { singleton } from 'tsyringe'
 import WikiUpdates from '../services/wikiUpdates.js'
 import { HiiqAlarm, ScanResult } from '../services/hiiqAlarm.js'
@@ -34,7 +34,7 @@ export default class Updates {
 
   private async messageWikiStyle(wiki: wikiActivities, url: string) {
     const content = Object.values(wiki.content)
-    const wikiEmbed = new MessageEmbed()
+    const wikiEmbed = new EmbedBuilder()
       .setColor(wiki.type === 'CREATED' ? '#00ff00' : '#e8e805')
       .setTitle(content[0].title)
       .setURL(`${url}${wiki.wikiId}`)
@@ -57,7 +57,7 @@ export default class Updates {
   private async messageHiiqStyle(iq: ScanResult) {
     let formatter = Intl.NumberFormat('en', { notation: 'compact' })
     const value = BigNumber.from(iq.balance.result)
-    const hiiqEmbed = new MessageEmbed()
+    const hiiqEmbed = new EmbedBuilder()
       .setColor('#ff0000')
       .setAuthor({
         name: 'https://etherscan.io/address/Ox...',
@@ -73,7 +73,7 @@ export default class Updates {
   }
 
   private async messageDowntimeStyle(url: string) {
-    const downtimeEmbed = new MessageEmbed()
+    const downtimeEmbed = new EmbedBuilder()
       .setColor('#ff0000')
       .setTitle('🚧 Webpage Offline')
       .setURL(url)

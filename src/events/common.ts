@@ -32,7 +32,7 @@ export class AppDiscord {
     this.DEV_URL = process.env.DEV_URL
   }
 
-  @On('ready')
+  @On({event: 'ready'})
   async isReady([client]: ArgsOf<'ready'>) {
     const channelIds = JSON.parse(process.env.CHANNELS)
 

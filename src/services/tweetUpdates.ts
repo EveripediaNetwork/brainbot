@@ -1,4 +1,3 @@
-import { wikiActivities } from './types/activityResult'
 import { TwitterApi } from 'twitter-api-v2'
 import {
   convertToCamelCase,
@@ -7,6 +6,7 @@ import {
   shortenAddress,
 } from '../utils/textUtilities.js'
 import { singleton } from 'tsyringe'
+import { wikiActivities } from './types/activityResult.js'
 
 @singleton()
 export default class WikiUpdatesTweeter {

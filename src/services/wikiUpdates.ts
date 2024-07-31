@@ -1,10 +1,14 @@
-import { injectable, singleton } from 'tsyringe'
-import { request, gql } from 'graphql-request'
+import { singleton } from 'tsyringe'
 import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
-import axios from 'axios'
-import { MessageEmbed, TextChannel } from 'discord.js'
+import { gql, request } from 'graphql-request'
+import { EmbedBuilder, TextChannel } from 'discord.js'
 import { client } from '../main.js'
+
+interface ApiResponse {
+  activities: wikiActivities[]
+}
+
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
@@ -47,7 +51,7 @@ export default class WikiUpdates {
     errorCode: string,
     env: ChannelTypes,
   ) {
-    const errorEmbed = new MessageEmbed()
+    const errorEmbed = new EmbedBuilder()
       .setColor('#ff0000')
       .setTitle(`⚠️ Request to ${env} API failed ⚠️`)
       .setURL(`${url}`)
@@ -77,7 +81,7 @@ export default class WikiUpdates {
   async query(
     time: number,
     channelType: ChannelTypes,
-  ): Promise<[wikiActivities]> {
+  ): Promise<wikiActivities[]> {
     const query = gql`
       {
         activities(lang: "en") {
@@ -126,13 +130,13 @@ export default class WikiUpdates {
         this.PROD_API_URL,
         query,
         ChannelTypes.PROD,
-      )
+      ) 
     }
-    result = result.activities.filter((wiki: wikiActivities) => {
-      return this.getUnixtime(wiki.datetime) > time
+    result = result?.activities.filter((wiki: wikiActivities) => {
+        return this.getUnixtime(wiki.datetime) > time
     })
 
-    return result
+    return result as wikiActivities[]
   }
 
   async makeApiCall(
@@ -140,13 +144,14 @@ export default class WikiUpdates {
     query: string,
     channelType: ChannelTypes,
     count = 0,
-  ) {
+  ): Promise<ApiResponse> {
+    let result
     try {
-      const apiCall = await request(link, query)
-      const newUnixTime = this.getUnixtime(apiCall.activities[0].datetime)
-      console.log(`${channelType} time`, newUnixTime)
-      await this.setTime(newUnixTime, channelType)
-      return apiCall
+      const apiCall: ApiResponse = await request(link, query)
+        const newUnixTime = this.getUnixtime(apiCall.activities[0].datetime as string)
+        console.log(`${channelType} time`, newUnixTime)
+        await this.setTime(newUnixTime, channelType)
+      result = apiCall
     } catch (e: any) {
       if (e) {
         if (count >= 5) {
@@ -161,5 +166,6 @@ export default class WikiUpdates {
         await this.makeApiCall(link, query, channelType, (count += 1))
       }
     }
+    return result as ApiResponse
   }
 }

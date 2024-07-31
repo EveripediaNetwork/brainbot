@@ -1,8 +1,12 @@
 import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
   CommandInteraction,
-  MessageActionRow,
-  SelectMenuInteraction,
-  MessageSelectMenu,
+  MessageActionRowComponentBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
+
 } from "discord.js";
 import { Discord, Slash, SelectMenuComponent } from "discordx";
 
@@ -14,43 +18,40 @@ const roles = [
 
 @Discord()
 export abstract class buttons {
-  @SelectMenuComponent("role-menu")
-  async handle(interaction: SelectMenuInteraction): Promise<unknown> {
-    await interaction.deferReply();
+  @SelectMenuComponent({ id: 'role-menu' })
+  async handle(interaction: StringSelectMenuInteraction): Promise<unknown> {
+    await interaction.deferReply()
 
     // extract selected value by member
-    const roleValue = interaction.values?.[0];
+    const roleValue = interaction.values?.[0]
 
     // if value not found
     if (!roleValue) {
-      return await interaction.followUp("invalid role id, select again");
+      return await interaction.followUp('invalid role id, select again')
     }
 
     await interaction.followUp(
       `you have selected role: ${
-        roles.find((r) => r.value === roleValue)?.label
-      }`
-    );
-    return;
+        roles.find(r => r.value === roleValue)?.label
+      }`,
+    )
+    return
   }
 
-  @Slash("my_roles", { description: "roles menu" })
-  async myRoles(interaction: CommandInteraction): Promise<unknown> {
-    await interaction.deferReply();
+  @Slash({ description: 'roles menu', name: 'my-roles' })
+  async myRoles(interaction: CommandInteraction): Promise<void> {
+    const btn = new ButtonBuilder()
+      .setLabel('Hello')
+      .setStyle(ButtonStyle.Primary)
+      .setCustomId('hello')
 
-    // create menu for roles
-    const menu = new MessageSelectMenu()
-      .addOptions(roles)
-      .setCustomId("role-menu");
+    const buttonRow =
+      new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+        btn,
+      )
 
-    // create a row for message actions
-    const buttonRow = new MessageActionRow().addComponents(menu);
-
-    // send it
-    interaction.editReply({
-      content: "select your role!",
+    interaction.reply({
       components: [buttonRow],
-    });
-    return;
+    })
   }
 }
