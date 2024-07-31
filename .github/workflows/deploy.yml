@@ -1,50 +1,45 @@
 name: deploy
-
 on:
   push:
     branches: [main]
-
 jobs:
   launch-bot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
-        with:
-          # npm cache files are stored in `~/.npm` on Linux/macOS
-          node-version: 20
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
-      - if: ${{ steps.cache-npm.outputs.cache-hit == false }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
-
-      - name: Installing dependencies
-        run: npm install
-
-      - name: Build
-        run: npm run build
-
-      - name: SSH Remote Commands
-        uses: appleboy/ssh-action@master
-        with:
-          HOST: ${{ secrets.HOST }}
-          USERNAME: ${{ secrets.USERNAME }}
-          KEY: ${{ secrets.KEY }}
-          script: |
-            cd brainbot
-            git pull
-            npm install --frozen-lockfile
-            npm run build
-            pm2 update
-
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Cache node modules
+      id: cache-npm
+      uses: actions/cache@v4
+      env:
+        cache-name: cache-node-modules
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+    - if: ${{ steps.cache-npm.outputs.cache-hit == false }}
+      name: List the state of node modules
+      continue-on-error: true
+      run: npm list
+    - name: Installing dependencies
+      run: npm ci
+    - name: Build
+      run: npm run build
+    - name: SSH Remote Commands
+      uses: appleboy/ssh-action@master
+      with:
+        HOST: ${{ secrets.HOST }}
+        USERNAME: ${{ secrets.USERNAME }}
+        KEY: ${{ secrets.KEY }}
+        script: |
+          cd brainbot
+          git pull
+          npm ci
+          npm run build
+          pm2 update
