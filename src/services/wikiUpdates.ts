@@ -12,7 +12,7 @@ interface ApiResponse {
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
-const retryTime = 30000
+const retryTime = 36000
 const notifyCount = 20 // every 20 count interval = 10mins
 @singleton()
 export default class WikiUpdates {
@@ -162,7 +162,7 @@ export default class WikiUpdates {
             retryTime / 1000
           } seconds...`,
         )
-        await new Promise(r => setTimeout(r, retryTime))
+        await new Promise(r => setTimeout(r, channelType === ChannelTypes.DEV ? retryTime * 100 : retryTime))
         await this.makeApiCall(link, query, channelType, (count += 1))
       }
     }
