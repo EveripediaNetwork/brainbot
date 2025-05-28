@@ -9,7 +9,6 @@ interface ApiResponse {
   activities: wikiActivities[]
 }
 
-
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
 const retryTime = 36000
