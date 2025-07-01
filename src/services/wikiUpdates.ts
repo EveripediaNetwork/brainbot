@@ -11,7 +11,7 @@ interface ApiResponse {
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 })
 
-const retryTime = 36000
+const retryTime = 15000
 const notifyCount = 20 // every 20 count interval = 10mins
 @singleton()
 export default class WikiUpdates {

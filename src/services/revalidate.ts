@@ -19,13 +19,13 @@ export default class RevalidateService {
     let revalidateUrl: string
 
     if (id === '/' || id === '/activity') {
-      revalidateUrl = `${url}revalidate?secret=${this.REVALIDATE_SECRET}&path=${id}`
+      return
     } else {
-      revalidateUrl = `${url}/revalidate?secret=${this.REVALIDATE_SECRET}&path=/wiki/${id}`
+      revalidateUrl = `${url}revalidation?wikiId=${id}`
     }
 
     try {
-      const res = await axios.get(revalidateUrl)
+      const res = await axios.post(revalidateUrl)
       console.log('♻️  REVALIDATING :', res.data)
     } catch (e) {
       console.log('🚨 ERROR REVALIDATING: ', e)
