@@ -114,11 +114,21 @@ export default class WikiUpdates {
         console.log(
           `🚨 Sending error notification to ${channelType} channel for ${errorCode}`,
         )
+
+        const alertUserId = process.env.ALERT_USER_ID
+
+        const mentionText = alertUserId ? `<@${alertUserId}> ` : ''
+
+        const messageContent = `${mentionText}`
+
         await channel.send({
+          content: messageContent,
           embeds: [
             await this.messageApiErrorStyle(link, errorCode, channelType),
           ],
         })
+
+        console.log('✅ Message sent successfully')
       }
     } catch (error) {
       console.error(`❌ Failed to send error notification:`, error)
@@ -243,7 +253,6 @@ export default class WikiUpdates {
         `Error ${errorCode}: API Request to ${link} failed. Attempt ${count + 1}/${maxRetries}`,
       )
 
-
       if (count >= maxRetries - 1) {
         await this.notifyError(count + 1, channelType, link, errorCode)
         throw new Error(
@@ -332,6 +341,16 @@ export default class WikiUpdates {
 
           if (previousStatus && !previousStatus.isHealthy) {
             console.log(`🎉 API ${channelType} has recovered!`)
+            const channelId =
+              channelType === ChannelTypes.DEV
+                ? this.CHANNEL_IDS.DEV.WIKI
+                : this.CHANNEL_IDS.PROD.WIKI
+            const channel = client.channels.cache.get(channelId) as TextChannel
+            if (channel) {
+              await channel.send(
+                `✅ **RECOVERY** - ${channelType} API is back online! 🎉`,
+              )
+            }
           }
         }
       }
