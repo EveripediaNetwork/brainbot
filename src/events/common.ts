@@ -169,7 +169,7 @@ export class AppDiscord {
         channelIds.PROD.WIKI,
       ) as TextChannel,
       prodAlertChannel: client.channels.cache.get(
-        channelIds.PROD.WIKI,
+        channelIds.PROD.ALARMS,
       ) as TextChannel,
     }
 

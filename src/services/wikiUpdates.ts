@@ -96,7 +96,7 @@ export default class WikiUpdates {
       const channelId =
         channelType === ChannelTypes.DEV
           ? this.CHANNEL_IDS.DEV.WIKI
-          : this.CHANNEL_IDS.PROD.WIKI
+          : this.CHANNEL_IDS.PROD.ALARMS
 
       const channel = client.channels.cache.get(channelId) as TextChannel
 
@@ -301,9 +301,9 @@ export default class WikiUpdates {
   }
 
   async startApiHealthMonitoring(): Promise<void> {
-    const checkInterval = 60000
+    const checkInterval = 120000 // 2 minutes
 
-    console.log('🔍 Starting API Health Monitoring - checking every 1 minute')
+    console.log('🔍 Starting API Health Monitoring - checking every 2 minutes')
 
     this.apiHealthStatus.set(ChannelTypes.DEV, {
       isHealthy: true,
@@ -344,7 +344,7 @@ export default class WikiUpdates {
             const channelId =
               channelType === ChannelTypes.DEV
                 ? this.CHANNEL_IDS.DEV.WIKI
-                : this.CHANNEL_IDS.PROD.WIKI
+                : this.CHANNEL_IDS.PROD.ALARMS
             const channel = client.channels.cache.get(channelId) as TextChannel
             if (channel) {
               await channel.send(
