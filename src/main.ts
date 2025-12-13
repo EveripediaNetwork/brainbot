@@ -21,7 +21,7 @@ export const client = new Client({
 });
 
 
-client.once("ready", async () => {
+client.once("clientReady", async () => {
     // make sure all guilds are in cache
     await client.guilds.fetch();
 

@@ -152,8 +152,8 @@ export class AppDiscord {
     ]
   }
 
-  @On({ event: 'ready' })
-  async isReady([client]: ArgsOf<'ready'>) {
+  @On({ event: 'clientReady' })
+  async isReady([client]: ArgsOf<'clientReady'>) {
     console.log('🤖 Bot is ready! Setting up scheduled tasks...')
 
     const channelIds = JSON.parse(process.env.CHANNELS)

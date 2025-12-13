@@ -35,7 +35,7 @@ export default class RevalidateService {
   async extractLinks(link: string) {
     let wikis
     try {
-      const url = `${this.url(link)}sitemap`
+      const url = `${this.url(link)}sitemap.xml`
 
       const res = await axios.get(url, {
         responseType: 'text',
