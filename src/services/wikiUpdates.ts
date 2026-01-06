@@ -2,7 +2,7 @@ import { injectable, singleton } from 'tsyringe'
 import { ChannelTypes, wikiActivities } from './types/activityResult.js'
 import NodeCache from 'node-cache'
 import { gql, request } from 'graphql-request'
-import { EmbedBuilder, TextChannel } from 'discord.js'
+import { EmbedBuilder, WebhookClient } from 'discord.js'
 import { client } from '../main.js'
 
 interface ApiResponse {
@@ -21,6 +21,8 @@ export default class WikiUpdates {
   DEV_CHANNEL_ID: string
   PROD_CHANNEL_ID: string
   REVALIDATE_SECRET: string
+  DEV_WIKI_WEBHOOK: string
+  PROD_ALARMS_WEBHOOK: string
 
   private apiHealthStatus = new Map<
     ChannelTypes,
@@ -34,6 +36,8 @@ export default class WikiUpdates {
     this.DEV_CHANNEL_ID = this.CHANNEL_IDS.DEV.WIKI
     this.PROD_CHANNEL_ID = this.CHANNEL_IDS.PROD.WIKI
     this.REVALIDATE_SECRET = process.env.REVALIDATE_SECRET
+    this.DEV_WIKI_WEBHOOK = process.env.DEV_WIKI_WEBHOOK as string
+    this.PROD_ALARMS_WEBHOOK = process.env.PROD_ALARMS_WEBHOOK as string
   }
 
   getUnixtime(time: string): number {
@@ -93,19 +97,19 @@ export default class WikiUpdates {
     errorCode: string,
   ) {
     try {
-      const channelId =
+      const webhookUrl =
         channelType === ChannelTypes.DEV
-          ? this.CHANNEL_IDS.DEV.WIKI
-          : this.CHANNEL_IDS.PROD.ALARMS
+          ? this.DEV_WIKI_WEBHOOK
+          : this.DEV_WIKI_WEBHOOK
 
-      const channel = client.channels.cache.get(channelId) as TextChannel
-
-      if (!channel) {
+      if (!webhookUrl) {
         console.error(
-          `❌ Discord channel not found for ${channelType}: ${channelId}`,
+          `❌ Webhook URL not configured for ${channelType}`,
         )
         return
       }
+
+      const webhook = new WebhookClient({ url: webhookUrl })
 
       const shouldNotify =
         errorCode === 'HEALTH_CHECK_FAILED' || count % notifyCount === 0
@@ -121,7 +125,7 @@ export default class WikiUpdates {
 
         const messageContent = `${mentionText}`
 
-        await channel.send({
+        await webhook.send({
           content: messageContent,
           embeds: [
             await this.messageApiErrorStyle(link, errorCode, channelType),
@@ -129,6 +133,7 @@ export default class WikiUpdates {
         })
 
         console.log('✅ Message sent successfully')
+        webhook.destroy()
       }
     } catch (error) {
       console.error(`❌ Failed to send error notification:`, error)
@@ -341,15 +346,16 @@ export default class WikiUpdates {
 
           if (previousStatus && !previousStatus.isHealthy) {
             console.log(`🎉 API ${channelType} has recovered!`)
-            const channelId =
+            const webhookUrl =
               channelType === ChannelTypes.DEV
-                ? this.CHANNEL_IDS.DEV.WIKI
-                : this.CHANNEL_IDS.PROD.ALARMS
-            const channel = client.channels.cache.get(channelId) as TextChannel
-            if (channel) {
-              await channel.send(
+                ? this.DEV_WIKI_WEBHOOK
+                : this.PROD_ALARMS_WEBHOOK
+            if (webhookUrl) {
+              const webhook = new WebhookClient({ url: webhookUrl })
+              await webhook.send(
                 `✅ **RECOVERY** - ${channelType} API is back online! 🎉`,
               )
+              webhook.destroy()
             }
           }
         }
