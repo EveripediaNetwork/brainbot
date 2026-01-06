@@ -18,6 +18,8 @@ export default class RevalidateService {
     let url = this.url(path)
     let revalidateUrl: string
 
+    if (url.includes('dev')) return
+
     if (id === '/' || id === '/activity') {
       return
     } else {

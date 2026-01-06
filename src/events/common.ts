@@ -1,4 +1,4 @@
-import { TextChannel } from 'discord.js'
+import { WebhookClient } from 'discord.js'
 import type { ArgsOf } from 'discordx'
 import { Discord, On } from 'discordx'
 import { injectable } from 'tsyringe'
@@ -31,19 +31,31 @@ interface ScheduledJobConfig {
 @Discord()
 @injectable()
 export class AppDiscord {
-  PROD_ALARMS: string
   PROD_URL: string
   DEV_URL: string
+  DEV_API_URL: string
   private scheduledJobs: schedule.Job[] = []
+  private webhooks: {
+    devWiki: string
+    devHiiq: string
+    prodWiki: string
+    prodAlarms: string
+  }
 
   constructor(
     private updates: Updates,
     private revalidate: RevalidateService,
     private wikiUpdates: WikiUpdates,
   ) {
-    this.PROD_ALARMS = JSON.parse(process.env.CHANNELS).ALARMS
     this.PROD_URL = process.env.PROD_URL
     this.DEV_URL = process.env.DEV_URL
+    this.DEV_API_URL = process.env.DEV_API_URL
+    this.webhooks = {
+      devWiki: process.env.DEV_WIKI_WEBHOOK || '',
+      devHiiq: process.env.DEV_HIIQ_WEBHOOK || '',
+      prodWiki: process.env.PROD_WIKI_WEBHOOK || '',
+      prodAlarms: process.env.PROD_ALARMS_WEBHOOK || '',
+    }
   }
 
   private async executeWithErrorHandling(
@@ -59,12 +71,7 @@ export class AppDiscord {
     }
   }
 
-  private createScheduledJobs(channels: any): ScheduledJobConfig[] {
-    const devWikiChannel = channels.devWikiChannel
-    const devHiiqChannel = channels.devHiiqChannel
-    const prodWikiChannel = channels.prodWikiChannel
-    const prodAlertChannel = channels.prodAlertChannel
-
+  private createScheduledJobs(): ScheduledJobConfig[] {
     return [
       {
         name: 'Wiki Updates Check',
@@ -73,13 +80,13 @@ export class AppDiscord {
         task: async () => {
           await Promise.all([
             this.updates.sendUpdates({
-              channelId: devWikiChannel,
+              webhookUrl: this.webhooks.devWiki,
               channelType: ChannelTypes.DEV,
               url: this.DEV_URL,
               updateType: UpdateTypes.WIKI,
             }),
             this.updates.sendUpdates({
-              channelId: prodWikiChannel,
+              webhookUrl: this.webhooks.prodWiki,
               channelType: ChannelTypes.PROD,
               url: this.PROD_URL,
               updateType: UpdateTypes.WIKI,
@@ -93,7 +100,7 @@ export class AppDiscord {
         enabled: true,
         task: async () => {
           await this.updates.sendUpdates({
-            channelId: devHiiqChannel,
+            webhookUrl: this.webhooks.devHiiq,
             channelType: ChannelTypes.DEV,
             url: '',
             updateType: UpdateTypes.HIIQ,
@@ -110,10 +117,10 @@ export class AppDiscord {
               this.PROD_URL,
               `${process.cwd()}/build/utils/prodWikiLinks.js`,
             ),
-            this.revalidate.revalidateRandomWiki(
-              this.DEV_URL,
-              `${process.cwd()}/build/utils/devWikiLinks.js`,
-            ),
+            // this.revalidate.revalidateRandomWiki(
+            //   this.DEV_URL,
+            //   `${process.cwd()}/build/utils/devWikiLinks.js`,
+            // ),
           ])
         },
       },
@@ -127,9 +134,9 @@ export class AppDiscord {
             ...pages.map(page =>
               this.revalidate.revalidateWikiPage(this.PROD_URL, page),
             ),
-            ...pages.map(page =>
-              this.revalidate.revalidateWikiPage(this.DEV_URL, page),
-            ),
+            // ...pages.map(page =>
+            //   this.revalidate.revalidateWikiPage(this.DEV_URL, page),
+            // ),
           ])
         },
       },
@@ -138,7 +145,7 @@ export class AppDiscord {
         schedule: '*/30 * * * *',
         enabled: true,
         task: async () => {
-          await this.checkWebpageStatus(urls, prodAlertChannel)
+          await this.checkWebpageStatus(urls, this.webhooks.prodAlarms)
         },
       },
       {
@@ -156,26 +163,12 @@ export class AppDiscord {
   async isReady([client]: ArgsOf<'clientReady'>) {
     console.log('🤖 Bot is ready! Setting up scheduled tasks...')
 
-    const channelIds = JSON.parse(process.env.CHANNELS)
-
-    const channels = {
-      devWikiChannel: client.channels.cache.get(
-        channelIds.DEV.WIKI,
-      ) as TextChannel,
-      devHiiqChannel: client.channels.cache.get(
-        channelIds.DEV.HIIQ,
-      ) as TextChannel,
-      prodWikiChannel: client.channels.cache.get(
-        channelIds.PROD.WIKI,
-      ) as TextChannel,
-      prodAlertChannel: client.channels.cache.get(
-        channelIds.PROD.ALARMS,
-      ) as TextChannel,
-    }
-
-    Object.entries(channels).forEach(([name, channel]) => {
-      if (!channel) {
-        console.error(`❌ Channel ${name} not found!`)
+    // Validate webhook URLs
+    Object.entries(this.webhooks).forEach(([name, url]) => {
+      if (!url) {
+        console.warn(`⚠️ Webhook ${name} not configured`)
+      } else {
+        console.log(`✅ Webhook ${name} configured`)
       }
     })
 
@@ -187,7 +180,7 @@ export class AppDiscord {
       this.wikiUpdates.startApiHealthMonitoring(),
     )
 
-    const jobConfigs = this.createScheduledJobs(channels)
+    const jobConfigs = this.createScheduledJobs()
 
     jobConfigs.forEach(config => {
       if (config.enabled) {
@@ -213,7 +206,7 @@ export class AppDiscord {
 
       const [extractedProdLinks, extractedDevLinks] = await Promise.all([
         this.revalidate.extractLinks(this.PROD_URL),
-        this.revalidate.extractLinks(this.DEV_URL),
+        this.revalidate.extractLinks(this.DEV_API_URL),
       ])
 
       await Promise.all([
@@ -236,7 +229,7 @@ export class AppDiscord {
 
   async checkWebpageStatus(
     urls: string[],
-    channel: TextChannel,
+    webhookUrl: string,
   ): Promise<void> {
     console.log(`🔍 Checking status of ${urls.length} websites...`)
 
@@ -283,7 +276,7 @@ export class AppDiscord {
         if (result) {
           console.log(`  - ${result.url}: ${result.status}`)
           await this.updates.sendUpdates({
-            channelId: channel,
+            webhookUrl: webhookUrl,
             channelType: ChannelTypes.PROD,
             url: result.url,
             updateType: UpdateTypes.DOWNTIME,

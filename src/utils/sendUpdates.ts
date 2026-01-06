@@ -3,7 +3,7 @@ import {
   ChannelTypes,
   UpdateTypes,
 } from './../services/types/activityResult.js'
-import { EmbedBuilder, TextChannel } from 'discord.js'
+import { EmbedBuilder, WebhookClient } from 'discord.js'
 import { singleton } from 'tsyringe'
 import WikiUpdates from '../services/wikiUpdates.js'
 import { HiiqAlarm, ScanResult } from '../services/hiiqAlarm.js'
@@ -13,7 +13,7 @@ import WikiUpdatesTweeter from '../services/tweetUpdates.js'
 import RevalidateService from '../services/revalidate.js'
 
 interface MessageUpdates {
-  channelId: TextChannel
+  webhookUrl: string
   channelType: ChannelTypes
   url: string
   updateType: UpdateTypes
@@ -42,14 +42,12 @@ export default class Updates {
       .setImage(`${this.META_URL}${content[0].images[0].id}`)
       .setTimestamp()
       .setFooter({
-        text: `${wiki.type.toLowerCase()} by ${
-          wiki.user.profile?.username ? wiki.user.profile.username : 'user'
-        }  `,
-        iconURL: `${this.META_URL}${
-          wiki.user.profile?.avatar
+        text: `${wiki.type.toLowerCase()} by ${wiki.user.profile?.username ? wiki.user.profile.username : 'user'
+          }  `,
+        iconURL: `${this.META_URL}${wiki.user.profile?.avatar
             ? wiki.user.profile.avatar
             : 'QmXqCRoaA61P3KamAd8UgGYyrcdb5Fu2REL6jrcVBSawwE'
-        }`,
+          }`,
       })
     return wikiEmbed
   }
@@ -107,40 +105,62 @@ export default class Updates {
     await this.twitter.tweetWikiActivity(wikiActivity, messageUpdates.url)
   }
 
+  private getWebhookClient(webhookUrl: string): WebhookClient | null {
+    if (!webhookUrl) {
+      return null
+    }
+    try {
+      return new WebhookClient({ url: webhookUrl })
+    } catch (error) {
+      console.error('❌ Invalid webhook URL:', error)
+      return null
+    }
+  }
+
   async sendUpdates(messageUpdates: MessageUpdates) {
-    if (messageUpdates.updateType === UpdateTypes.WIKI) {
-      const time = await this.wikiUpdates.getTime(messageUpdates.channelType)
-      const response = await this.wikiUpdates.query(
-        time,
-        messageUpdates.channelType,
-      )
-      response.forEach(async (activity: wikiActivities) => {
-        messageUpdates.channelId.send({
-          embeds: [await this.messageWikiStyle(activity, messageUpdates.url)],
-        })
-        await this.checkAndTweet(messageUpdates, activity)
-        await this.revalidate.revalidateWikiPage(
-          messageUpdates.url,
-          activity.wikiId,
+    const webhook = this.getWebhookClient(messageUpdates.webhookUrl)
+    if (!webhook) {
+      console.error(`❌ Webhook not found for ${messageUpdates.channelType} - ${messageUpdates.updateType}`)
+      return
+    }
+
+    try {
+      if (messageUpdates.updateType === UpdateTypes.WIKI) {
+        const time = await this.wikiUpdates.getTime(messageUpdates.channelType)
+        const response = await this.wikiUpdates.query(
+          time,
+          messageUpdates.channelType,
         )
-      })
-    }
-
-    if (messageUpdates.updateType === UpdateTypes.HIIQ) {
-      const response = await this.hiiqAlarm.checkHiiq()
-      response.forEach(async (e: ScanResult) => {
-        if (e.balance.alarm) {
-          messageUpdates.channelId.send({
-            embeds: [await this.messageHiiqStyle(e)],
+        for (const activity of response) {
+          await webhook.send({
+            embeds: [await this.messageWikiStyle(activity, messageUpdates.url)],
           })
+          await this.checkAndTweet(messageUpdates, activity)
+          await this.revalidate.revalidateWikiPage(
+            messageUpdates.url,
+            activity.wikiId,
+          )
         }
-      })
-    }
+      }
 
-    if (messageUpdates.updateType === UpdateTypes.DOWNTIME) {
-      messageUpdates.channelId.send({
-        embeds: [await this.messageDowntimeStyle(messageUpdates.url)],
-      })
+      if (messageUpdates.updateType === UpdateTypes.HIIQ) {
+        const response = await this.hiiqAlarm.checkHiiq()
+        for (const e of response) {
+          if (e.balance.alarm) {
+            await webhook.send({
+              embeds: [await this.messageHiiqStyle(e)],
+            })
+          }
+        }
+      }
+
+      if (messageUpdates.updateType === UpdateTypes.DOWNTIME) {
+        await webhook.send({
+          embeds: [await this.messageDowntimeStyle(messageUpdates.url)],
+        })
+      }
+    } finally {
+      webhook.destroy()
     }
   }
 }
