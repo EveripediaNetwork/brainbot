@@ -1,4 +1,3 @@
-import { WebhookClient } from 'discord.js'
 import type { ArgsOf } from 'discordx'
 import { Discord, On } from 'discordx'
 import { injectable } from 'tsyringe'
@@ -8,7 +7,7 @@ import { ChannelTypes, UpdateTypes } from '../services/types/activityResult.js'
 import RevalidateService from '../services/revalidate.js'
 import WikiUpdates from '../services/wikiUpdates.js'
 import { writeFile } from '../utils/helpers.js'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 
 const urls = [
   'https://iq.wiki/categories/daos',
