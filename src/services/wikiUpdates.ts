@@ -100,7 +100,7 @@ export default class WikiUpdates {
       const webhookUrl =
         channelType === ChannelTypes.DEV
           ? this.DEV_WIKI_WEBHOOK
-          : this.DEV_WIKI_WEBHOOK
+          : this.PROD_ALARMS_WEBHOOK
 
       if (!webhookUrl) {
         console.error(
