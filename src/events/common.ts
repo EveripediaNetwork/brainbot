@@ -34,6 +34,7 @@ export class AppDiscord {
   DEV_URL: string
   DEV_API_URL: string
   private scheduledJobs: schedule.Job[] = []
+  private urlFailureCount: Map<string, number> = new Map()
   private webhooks: {
     devWiki: string
     devHiiq: string
@@ -226,6 +227,26 @@ export class AppDiscord {
     }
   }
 
+  private async checkSingleUrl(
+    url: string,
+    timeout: number,
+  ): Promise<{ url: string; status: number | string; success: boolean; error?: string }> {
+    try {
+      const response = await axios.get(url, {
+        timeout,
+        validateStatus: status => status < 500,
+      })
+      return { url, status: response.status, success: true }
+    } catch (error: any) {
+      const status = error.response?.status || 'TIMEOUT/NETWORK_ERROR'
+      return { url, status, success: false, error: error.message }
+    }
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   async checkWebpageStatus(
     urls: string[],
     webhookUrl: string,
@@ -233,47 +254,48 @@ export class AppDiscord {
     console.log(`🔍 Checking status of ${urls.length} websites...`)
 
     const timeout = 30000
-    const results = await Promise.allSettled(
+    const maxRetries = 3
+    const retryDelay = 30000 // 30 seconds
+
+    const finalResults = await Promise.all(
       urls.map(async url => {
-        try {
-          const response = await axios.get(url, {
-            timeout,
-            validateStatus: status => status < 500,
-          })
-          return { url, status: response.status, success: true }
-        } catch (error: any) {
-          const status = error.response?.status || 'TIMEOUT/NETWORK_ERROR'
-          console.error(`❌ ${url} failed:`, status)
-          return { url, status, success: false, error: error.message }
+        let lastResult = await this.checkSingleUrl(url, timeout)
+
+        // Retry up to 3 times with 30 second delays if failed
+        for (let attempt = 1; attempt < maxRetries && !lastResult.success; attempt++) {
+          console.log(`⏳ ${url} failed (attempt ${attempt}/${maxRetries}), retrying in 30 seconds...`)
+          await this.sleep(retryDelay)
+          lastResult = await this.checkSingleUrl(url, timeout)
         }
+
+        if (!lastResult.success) {
+          console.error(`❌ ${url} failed after ${maxRetries} attempts:`, lastResult.status)
+        }
+
+        return lastResult
       }),
     )
 
-    const processedResults = results.map((result, index) => {
-      if (result.status === 'fulfilled') {
-        return result.value
-      } else {
-        console.error(`❌ Promise rejected for ${urls[index]}:`, result.reason)
-        return {
-          url: urls[index],
-          status: 'PROMISE_REJECTED',
-          success: false,
-          error: result.reason,
-        }
-      }
-    })
-
-    const failedResults = processedResults.filter(result => !result.success)
-    const successfulResults = processedResults.filter(result => result.success)
+    const failedResults = finalResults.filter(result => !result.success)
+    const successfulResults = finalResults.filter(result => result.success)
 
     console.log(`✅ ${successfulResults.length}/${urls.length} websites are up`)
 
+    // Reset failure count for successful URLs
+    successfulResults.forEach(result => {
+      if (this.urlFailureCount.has(result.url)) {
+        console.log(`✅ ${result.url} is back online, resetting failure count`)
+        this.urlFailureCount.delete(result.url)
+      }
+    })
+
     if (failedResults.length > 0) {
-      console.log(`🚧 ${failedResults.length} websites are down:`)
+      console.log(`🚧 ${failedResults.length} websites are down after ${maxRetries} retry attempts:`)
 
       const notifications = failedResults.map(async result => {
         if (result) {
           console.log(`  - ${result.url}: ${result.status}`)
+          console.log(`🚨 Sending alert for ${result.url} after ${maxRetries} failed attempts`)
           await this.updates.sendUpdates({
             webhookUrl: webhookUrl,
             channelType: ChannelTypes.PROD,
