@@ -26,7 +26,7 @@ export default class WikiUpdates {
 
   private apiHealthStatus = new Map<
     ChannelTypes,
-    { isHealthy: boolean; lastCheck: number }
+    { isHealthy: boolean; lastCheck: number; alertSent: boolean }
   >()
 
   constructor() {
@@ -276,6 +276,10 @@ export default class WikiUpdates {
     return result as ApiResponse
   }
 
+  private async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   async checkApiHealth(channelType: ChannelTypes): Promise<boolean> {
     const link =
       channelType === ChannelTypes.DEV ? this.DEV_API_URL : this.PROD_API_URL
@@ -288,21 +292,49 @@ export default class WikiUpdates {
       }
     `
 
-    try {
-      await this.makeApiCallWithTimeout(link, simpleQuery, 30000)
-      this.apiHealthStatus.set(channelType, {
-        isHealthy: true,
-        lastCheck: Date.now(),
-      })
-      return true
-    } catch (error) {
-      this.apiHealthStatus.set(channelType, {
-        isHealthy: false,
-        lastCheck: Date.now(),
-      })
-      console.error(`API Health Check Failed for ${channelType}:`, error)
-      return false
+    const maxRetries = 3
+    const retryDelay = 10000 // 10 seconds
+
+    let lastError: any
+
+    // Try up to 3 times with 10 second delays between attempts
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.makeApiCallWithTimeout(link, simpleQuery, 30000)
+
+        // Success - update health status and return
+        this.apiHealthStatus.set(channelType, {
+          isHealthy: true,
+          lastCheck: Date.now(),
+          alertSent: false,
+        })
+
+        if (attempt > 1) {
+          console.log(`✅ API ${channelType} health check succeeded on attempt ${attempt}/${maxRetries}`)
+        }
+
+        return true
+      } catch (error) {
+        lastError = error
+        console.error(`❌ API Health Check Failed for ${channelType} (attempt ${attempt}/${maxRetries}):`, error)
+
+        // If not the last attempt, wait before retrying
+        if (attempt < maxRetries) {
+          console.log(`⏳ Retrying API health check for ${channelType} in 10 seconds...`)
+          await this.sleep(retryDelay)
+        }
+      }
     }
+
+    // All attempts failed - preserve alertSent state
+    const currentStatus = this.apiHealthStatus.get(channelType)
+    this.apiHealthStatus.set(channelType, {
+      isHealthy: false,
+      lastCheck: Date.now(),
+      alertSent: currentStatus?.alertSent || false,
+    })
+    console.error(`❌ API Health Check Failed for ${channelType} after ${maxRetries} attempts`)
+    return false
   }
 
   async startApiHealthMonitoring(): Promise<void> {
@@ -313,10 +345,12 @@ export default class WikiUpdates {
     this.apiHealthStatus.set(ChannelTypes.DEV, {
       isHealthy: true,
       lastCheck: 0,
+      alertSent: false,
     })
     this.apiHealthStatus.set(ChannelTypes.PROD, {
       isHealthy: true,
       lastCheck: 0,
+      alertSent: false,
     })
 
     setInterval(async () => {
@@ -325,26 +359,41 @@ export default class WikiUpdates {
       for (const channelType of [ChannelTypes.DEV, ChannelTypes.PROD]) {
         const previousStatus = this.apiHealthStatus.get(channelType)
         const isHealthy = await this.checkApiHealth(channelType)
+        const currentStatus = this.apiHealthStatus.get(channelType)
 
         if (!isHealthy) {
           console.warn(
             `⚠️ API ${channelType} is unresponsive at ${new Date().toISOString()}`,
           )
 
-          await this.notifyError(
-            1,
-            channelType,
-            channelType === ChannelTypes.DEV
-              ? this.DEV_API_URL
-              : this.PROD_API_URL,
-            'HEALTH_CHECK_FAILED',
-          )
+          // Only send alert if we haven't already sent one for this failure
+          if (!currentStatus?.alertSent) {
+            console.log(`🚨 Sending initial error alert for ${channelType}`)
+            await this.notifyError(
+              1,
+              channelType,
+              channelType === ChannelTypes.DEV
+                ? this.DEV_API_URL
+                : this.PROD_API_URL,
+              'HEALTH_CHECK_FAILED',
+            )
+
+            // Mark that we've sent the alert
+            this.apiHealthStatus.set(channelType, {
+              isHealthy: false,
+              lastCheck: Date.now(),
+              alertSent: true,
+            })
+          } else {
+            console.log(`⏳ API ${channelType} still down, continuing to monitor silently...`)
+          }
         } else {
           console.log(
             `✅ API ${channelType} is healthy at ${new Date().toISOString()}`,
           )
 
-          if (previousStatus && !previousStatus.isHealthy) {
+          // Send recovery message only if API was previously unhealthy AND we sent an alert
+          if (previousStatus && !previousStatus.isHealthy && previousStatus.alertSent) {
             console.log(`🎉 API ${channelType} has recovered!`)
             const webhookUrl =
               channelType === ChannelTypes.DEV
@@ -357,6 +406,13 @@ export default class WikiUpdates {
               )
               webhook.destroy()
             }
+
+            // Reset alertSent flag since API is healthy again
+            this.apiHealthStatus.set(channelType, {
+              isHealthy: true,
+              lastCheck: Date.now(),
+              alertSent: false,
+            })
           }
         }
       }
@@ -387,7 +443,7 @@ export default class WikiUpdates {
 
   getApiHealthStatus(): Map<
     ChannelTypes,
-    { isHealthy: boolean; lastCheck: number }
+    { isHealthy: boolean; lastCheck: number; alertSent: boolean }
   > {
     return new Map(this.apiHealthStatus)
   }
