@@ -93,6 +93,68 @@ export default class WikiUpdates {
     return errorEmbed
   }
 
+  private async messagePrediqtErrorStyle(url: string, errorCode: string) {
+    let description = `📊 Error code: ${errorCode}`
+    let color: number = 0xff0000
+    let title = `📉 PrediQT API is down 📉`
+
+    if (errorCode === 'TIMEOUT') {
+      description = `📊 PredIQt API is unresponsive (timeout after 30 seconds)\n📉 The prediction market service is not responding within the expected timeframe.`
+      color = 0xff6600
+      title = `📉 PredIQt API Timeout`
+    } else if (errorCode === 'HEALTH_CHECK_FAILED') {
+      description = `📊 PredIQt API health check failed - service may be down\n📉 Automated monitoring detected an issue with the PredIQt API endpoint.`
+      color = 0xcc0000
+      title = `📉 PredIQt API Health Check Failed`
+    }
+
+    const errorEmbed = new EmbedBuilder()
+      .setColor(color)
+      .setTitle(title)
+      .setURL(url)
+      .setDescription(description)
+      .addFields([
+        { name: '📊 Service', value: 'PredIQt', inline: true },
+        { name: '🔗 URL', value: url, inline: false },
+        { name: '⏰ Time', value: new Date().toLocaleString(), inline: true },
+      ])
+      .setTimestamp()
+      .setFooter({
+        text: 'EP Bot PrediQT Monitor',
+      })
+    return errorEmbed
+  }
+
+  async notifyPrediqtError(errorCode: string) {
+    try {
+      const webhookUrl = this.PROD_ALARMS_WEBHOOK
+
+      if (!webhookUrl) {
+        console.error(`❌ Webhook URL not configured for PrediQT alerts`)
+        return
+      }
+
+      const webhook = new WebhookClient({ url: webhookUrl })
+
+      console.log(`📉 Sending PrediQT error notification for ${errorCode}`)
+
+      const alertUserId = process.env.ALERT_USER_ID
+      const mentionText = alertUserId ? `<@${alertUserId}> ` : ''
+
+      await webhook.send({
+        content: mentionText,
+        embeds: [
+          await this.messagePrediqtErrorStyle(this.PREDIQT_API_URL, errorCode),
+        ],
+      })
+
+      console.log('✅ PrediQT alert sent successfully')
+      webhook.destroy()
+    } catch (error) {
+      console.error(`❌ Failed to send PrediQT error notification:`, error)
+    }
+  }
+
   async notifyError(
     count: number,
     channelType: ChannelTypes,
@@ -418,13 +480,8 @@ export default class WikiUpdates {
           )
 
           if (!currentStatus?.alertSent) {
-            console.log(`🚨 Sending initial error alert for PrediQT`)
-            await this.notifyError(
-              1,
-              ChannelTypes.PROD,
-              this.PREDIQT_API_URL,
-              'HEALTH_CHECK_FAILED',
-            )
+            console.log(`📉 Sending initial error alert for PrediQT`)
+            await this.notifyPrediqtError('HEALTH_CHECK_FAILED')
 
             this.apiHealthStatus.set('PREDIQT', {
               isHealthy: false,
@@ -440,12 +497,12 @@ export default class WikiUpdates {
           )
 
           if (previousStatus && !previousStatus.isHealthy && previousStatus.alertSent) {
-            console.log(`🎉 PrediQT API has recovered!`)
+            console.log(`📈 PrediQT API has recovered!`)
             const webhookUrl = this.PROD_ALARMS_WEBHOOK
             if (webhookUrl) {
               const webhook = new WebhookClient({ url: webhookUrl })
               await webhook.send(
-                `✅ **RECOVERY** - PrediQT API is back online! 🎉`,
+                `📈 **RECOVERY** - PrediQT API is back online! 📊`,
               )
               webhook.destroy()
             }
