@@ -1,4 +1,5 @@
 import axios from 'axios'
+import fs from 'fs'
 import { singleton } from 'tsyringe'
 import { writeFile } from '../utils/helpers.js'
 
@@ -50,6 +51,11 @@ export default class RevalidateService {
   }
 
   async revalidateRandomWiki(url: string, path: string) {
+    if (!fs.existsSync(path)) {
+      console.log(`⚠️ Wiki links file not found: ${path}, skipping revalidation`)
+      return
+    }
+
     const { links } = await import(path)
 
     if (links.length !== 0) {
