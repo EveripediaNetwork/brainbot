@@ -4,6 +4,7 @@ import NodeCache from 'node-cache'
 import { gql, request } from 'graphql-request'
 import { EmbedBuilder, WebhookClient } from 'discord.js'
 import { client } from '../main.js'
+import axios from 'axios'
 
 interface ApiResponse {
   activities: wikiActivities[]
@@ -21,17 +22,19 @@ export default class WikiUpdates {
   DEV_CHANNEL_ID: string
   PROD_CHANNEL_ID: string
   REVALIDATE_SECRET: string
+  PREDIQT_API_URL: string
   DEV_WIKI_WEBHOOK: string
   PROD_ALARMS_WEBHOOK: string
 
   private apiHealthStatus = new Map<
-    ChannelTypes,
+    ChannelTypes | 'PREDIQT',
     { isHealthy: boolean; lastCheck: number; alertSent: boolean }
   >()
 
   constructor() {
     this.DEV_API_URL = process.env.DEV_API_URL
     this.PROD_API_URL = process.env.PROD_API_URL
+    this.PREDIQT_API_URL = process.env.PREDIQT_API_URL
     this.CHANNEL_IDS = JSON.parse(process.env.CHANNELS)
     this.DEV_CHANNEL_ID = this.CHANNEL_IDS.DEV.WIKI
     this.PROD_CHANNEL_ID = this.CHANNEL_IDS.PROD.WIKI
@@ -337,6 +340,48 @@ export default class WikiUpdates {
     return false
   }
 
+  async checkPrediqtApiHealth(): Promise<boolean> {
+    const maxRetries = 3
+    const retryDelay = 10000
+
+    let lastError: any
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await axios.get(this.PREDIQT_API_URL, { timeout: 30000 })
+
+        this.apiHealthStatus.set('PREDIQT', {
+          isHealthy: true,
+          lastCheck: Date.now(),
+          alertSent: false,
+        })
+
+        if (attempt > 1) {
+          console.log(`✅ PrediQT API health check succeeded on attempt ${attempt}/${maxRetries}`)
+        }
+
+        return true
+      } catch (error) {
+        lastError = error
+        console.error(`❌ PrediQT API Health Check Failed (attempt ${attempt}/${maxRetries}):`, error)
+
+        if (attempt < maxRetries) {
+          console.log(`⏳ Retrying PrediQT API health check in 10 seconds...`)
+          await this.sleep(retryDelay)
+        }
+      }
+    }
+
+    const currentStatus = this.apiHealthStatus.get('PREDIQT')
+    this.apiHealthStatus.set('PREDIQT', {
+      isHealthy: false,
+      lastCheck: Date.now(),
+      alertSent: currentStatus?.alertSent || false,
+    })
+    console.error(`❌ PrediQT API Health Check Failed after ${maxRetries} attempts`)
+    return false
+  }
+
   async startApiHealthMonitoring(): Promise<void> {
     const checkInterval = 120000 // 2 minutes
 
@@ -352,9 +397,67 @@ export default class WikiUpdates {
       lastCheck: 0,
       alertSent: false,
     })
+    this.apiHealthStatus.set('PREDIQT', {
+      isHealthy: true,
+      lastCheck: 0,
+      alertSent: false,
+    })
 
     setInterval(async () => {
       console.log('🏥 Running API health checks...')
+
+      // Check PrediQT API health
+      {
+        const previousStatus = this.apiHealthStatus.get('PREDIQT')
+        const isHealthy = await this.checkPrediqtApiHealth()
+        const currentStatus = this.apiHealthStatus.get('PREDIQT')
+
+        if (!isHealthy) {
+          console.warn(
+            `⚠️ PrediQT API is unresponsive at ${new Date().toISOString()}`,
+          )
+
+          if (!currentStatus?.alertSent) {
+            console.log(`🚨 Sending initial error alert for PrediQT`)
+            await this.notifyError(
+              1,
+              ChannelTypes.PROD,
+              this.PREDIQT_API_URL,
+              'HEALTH_CHECK_FAILED',
+            )
+
+            this.apiHealthStatus.set('PREDIQT', {
+              isHealthy: false,
+              lastCheck: Date.now(),
+              alertSent: true,
+            })
+          } else {
+            console.log(`⏳ PrediQT API still down, continuing to monitor silently...`)
+          }
+        } else {
+          console.log(
+            `✅ PrediQT API is healthy at ${new Date().toISOString()}`,
+          )
+
+          if (previousStatus && !previousStatus.isHealthy && previousStatus.alertSent) {
+            console.log(`🎉 PrediQT API has recovered!`)
+            const webhookUrl = this.PROD_ALARMS_WEBHOOK
+            if (webhookUrl) {
+              const webhook = new WebhookClient({ url: webhookUrl })
+              await webhook.send(
+                `✅ **RECOVERY** - PrediQT API is back online! 🎉`,
+              )
+              webhook.destroy()
+            }
+
+            this.apiHealthStatus.set('PREDIQT', {
+              isHealthy: true,
+              lastCheck: Date.now(),
+              alertSent: false,
+            })
+          }
+        }
+      }
 
       for (const channelType of [ChannelTypes.DEV, ChannelTypes.PROD]) {
         const previousStatus = this.apiHealthStatus.get(channelType)
@@ -442,7 +545,7 @@ export default class WikiUpdates {
   }
 
   getApiHealthStatus(): Map<
-    ChannelTypes,
+    ChannelTypes | 'PREDIQT',
     { isHealthy: boolean; lastCheck: number; alertSent: boolean }
   > {
     return new Map(this.apiHealthStatus)

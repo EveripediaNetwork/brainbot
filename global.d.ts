@@ -17,5 +17,6 @@ declare namespace NodeJS {
     TWITTER_API_SECRET: string
     TWITTER_ACCESS_TOKEN: string
     TWITTER_ACCESS_SECRET: string
+    PREDIQT_API_URL: string
   }
 }

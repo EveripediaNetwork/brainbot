@@ -206,7 +206,7 @@ export class AppDiscord {
 
       const [extractedProdLinks, extractedDevLinks] = await Promise.all([
         this.revalidate.extractLinks(this.PROD_URL),
-        this.revalidate.extractLinks(this.DEV_API_URL),
+        this.revalidate.extractLinks(this.DEV_URL),
       ])
 
       await Promise.all([

@@ -11,7 +11,7 @@ export default class RevalidateService {
   }
 
   url(path: string) {
-    return path.replace('/wiki/', '/api/')
+    return path.replace('/wiki/', '/')
   }
 
   async revalidateWikiPage(path: string, id?: string) {
@@ -37,7 +37,7 @@ export default class RevalidateService {
   async extractLinks(link: string) {
     let wikis
     try {
-      const url = `${this.url(link)}sitemap.xml`
+      const url = `${this.url(link)}/sitemap.xml`
 
       const res = await axios.get(url, {
         responseType: 'text',
