@@ -35,19 +35,19 @@ export default class RevalidateService {
     }
   }
 
-  async extractLinks(link: string) {
-    let wikis
+  async extractLinks(link: string): Promise<string[]> {
     try {
-      const url = `${this.url(link)}/sitemap.xml`
+      const url = new URL('sitemap.xml', this.url(link)).toString()
 
-      const res = await axios.get(url, {
+      const res = await axios.get<string>(url, {
         responseType: 'text',
       })
-      wikis = res.data.match(/\/wiki\/[^\s<]*?(?=<)/g)
+      const matches = res.data.match(/\/wiki\/[a-z0-9-]+/gi) ?? []
+      return [...new Set<string>(matches)]
     } catch (e: any) {
       console.error(e.data || e.response)
+      return []
     }
-    return wikis
   }
 
   async revalidateRandomWiki(url: string, path: string) {
@@ -56,7 +56,13 @@ export default class RevalidateService {
       return
     }
 
-    const { links } = await import(path)
+    let links: string[]
+    try {
+      ;({ links } = await import(path))
+    } catch (e) {
+      console.error(`🚨 Failed to load wiki links from ${path}:`, e)
+      return
+    }
 
     if (links.length !== 0) {
       const randomIndex = Math.floor(Math.random() * links.length)

@@ -12,9 +12,8 @@ export const writeFile = (arr: string[] | undefined, filePath: string) => {
     fs.mkdirSync(dir, { recursive: true })
   }
 
-  let cleanArray = arr.map((e: string) => `"${e}"`)
   try {
-    fs.writeFile(filePath, `export const links = [${cleanArray}]\n`, err => {
+    fs.writeFile(filePath, `export const links = ${JSON.stringify(arr)}\n`, err => {
       if (err) throw err
     })
   } catch (err) {
